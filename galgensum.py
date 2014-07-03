@@ -1,9 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Feb 26 12:25:30 2014
 Fixed on Mon Jul  2 13:19:56 2014
 
-@author: andrew
+Project: Characterize Error
+Subprogram: galgensum
+
+Author: Andrew Crooks
+Affiliation: Graduate Student @ UC Riverside
 """
 '''
 Combines single simulated galaxy images into batch images with the number of galaxies equal to iteration[1]

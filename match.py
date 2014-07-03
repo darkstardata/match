@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jan  4 19:42:20 2014
 
-Author: Andrew Crooks ; Graduate Student @ UC Riverside
+Project: Characterize Error
+Subprogram: match
 
+Author: Andrew Crooks
+Affiliation: Graduate Student @ UC Riverside
 
 """
 

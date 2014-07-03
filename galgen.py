@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jan  4 19:42:20 2014
 Fixed on Mon Jun 30 21:15:35 2014
 
-Author: Andrew Crooks ; Graduate Student @ UC Riverside
+Project: Characterize Error
+Subprogram: galgen
 
+Author: Andrew Crooks
+Affiliation: Graduate Student @ UC Riverside
 """
 
 """
@@ -167,6 +169,7 @@ def main():
         tsersic.extend([rsersic])
         tpa.extend([rpa])
 
+        tab = np.ones(len(tellipt))-tellipt
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
                 rxpix, rypix, rmag, rreff, rsersic, rpa, rab)
@@ -184,8 +187,8 @@ def main():
     t['ypix'] = typix
     t['mag'] = tmag
     t['r_eff'] = treff
-    t['ellipt'] = tellipt
     t['nsersic'] = tsersic
+    t['a/b'] = tab
     t['pos_angle'] = tpa
 
     t.write(outfilename, format='ascii.tab')
@@ -195,4 +198,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
