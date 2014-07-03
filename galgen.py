@@ -83,7 +83,7 @@ if sersic[0] <= 0:
 
 # Generate galfit feed file
 def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_coord, ypix_coord,
-            magnitude, radeff, n_sersic, pa, ab, psf_image='', dust_image=''):
+            magnitude, radeff, n_sersic, ab, pa, psf_image='', dust_image=''):
 
     # Generate string versions for GALFIT config file. Rounds all parameters to 2 decimal places
     sxpix = u'%6s' % xpix_coord
@@ -170,7 +170,7 @@ def main():
 
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
-                rxpix, rypix, rmag, rreff, rsersic, rpa, rab)
+                rxpix, rypix, rmag, rreff, rsersic, rab, rpa)
         cmnd1 = galfit+' ' + randgal + '.feed'
         os.system(cmnd1)
 
