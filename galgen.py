@@ -138,8 +138,8 @@ def main():
     typix = []
     tmag = []
     treff = []
-    tellipt = []
     tsersic = []
+    tab = []
     tpa = []
 
     # Read in table of random numbers, select column of random numbers, and reshape random numer array
@@ -155,21 +155,19 @@ def main():
         rypix = round(r[1]*ypix, 2)
         rmag = round(r[2]*abs(mag[1]-mag[0])+mag[0], 2)
         rreff = round(r[3]*abs(reff[1]-reff[0])+reff[0], 2)
-        rellipt = round(r[4]*abs(ellipt[1]-ellipt[0])+ellipt[0], 2)
         rsersic = round(r[5]*abs(sersic[1]-sersic[0])+sersic[0], 2)
-        rpa = round(r[6]*90, 2)
         rab = round(1-r[4]*abs(ellipt[1]-ellipt[0])+ellipt[0], 2)
+        rpa = round(r[6]*90, 2)
 
         # Store random parameters in lists that will be added to table t
         txpix.extend([rxpix])
         typix.extend([rypix])
         tmag.extend([rmag])
         treff.extend([rreff])
-        tellipt.extend([rellipt])
         tsersic.extend([rsersic])
+        tab.extend([rab])
         tpa.extend([rpa])
 
-        tab = np.ones(len(tellipt))-tellipt
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
                 rxpix, rypix, rmag, rreff, rsersic, rpa, rab)
@@ -187,7 +185,7 @@ def main():
     t['ypix'] = typix
     t['mag'] = tmag
     t['r_eff'] = treff
-    t['nsersic'] = tsersic
+    t['n_sersic'] = tsersic
     t['a/b'] = tab
     t['pos_angle'] = tpa
 
