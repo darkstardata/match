@@ -2,7 +2,7 @@
 Created on Sat Jan  4 19:42:20 2014
 Fixed on Mon Jun 30 21:15:35 2014
 
-Project: Characterize Error
+Project: match
 Subprogram: galgen
 
 Author: Andrew Crooks

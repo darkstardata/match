@@ -1,7 +1,7 @@
 """
-Created on 7:56 PM 02 Jul 2014
+Created at 7:56 PM on 02 Jul 2014
 
-Project: Characterize Error
+Project: match
 Subprogram: galsex
 
 Author: Andrew Crooks

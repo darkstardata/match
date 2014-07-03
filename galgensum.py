@@ -2,7 +2,7 @@
 Created on Wed Feb 26 12:25:30 2014
 Fixed on Mon Jul  2 13:19:56 2014
 
-Project: Characterize Error
+Project: match
 Subprogram: galgensum
 
 Author: Andrew Crooks
@@ -66,11 +66,6 @@ def main():
                 if verbose is 1:
                     output.write('\n ' + str(iteration[1]) + ' simulated galaxies merged into a ' +
                                  'single image; ' + galmodelset + str(x * iteration[1] + y) + '.fits \n')
-
-        # Check dir for file with same name as output, remove if present
-        cut = glob.glob(simgalset+galmodelset+'*.fits')
-        if simgalset+galmodelset+str(x)+'.fits' in cut:
-            os.remove(simgalset+galmodelset+str(x)+'.fits')
 
         # Write image (simulated batch plus science) to galmodelset*.fits (* is the iteration number)
         pyfits.writeto(simgalset+galmodelset+str(x)+'.fits', gimages)

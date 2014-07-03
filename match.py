@@ -1,7 +1,7 @@
 """
 Created on Sat Jan  4 19:42:20 2014
 
-Project: Characterize Error
+Project: match
 Subprogram: match
 
 Author: Andrew Crooks
