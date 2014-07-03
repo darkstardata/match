@@ -30,30 +30,30 @@ galmodel = 'galmodel'                       # sim galaxy file prefix
 galtab = 'galmodel.tab'
 
 # Local Subdirectories
-simimages = 'simimages/'
-simgalsets = 'simgalsets/'
+simimage = 'simimage/'
+simgalset = 'simgalset/'
 simcat = 'simcat/'
 sexcat = 'sexcat/'
 sexmatch = 'sexmatch/'
 
 # Prefixes for output files
 mc = 'mc'                                   # image with n sim gal added
-gsum = 'gsum'
+galmodelset = 'galmodelset'
 sim = 'sim'
 sex = 'sex'         #
 outfile = 'sexmatch'
 wdir = os.getcwd()+'/'
 
 
-# Set outfile name, number of iterations, and verbosity
+# Set outfile name, number of itertions, and verbosity
 outfilename = 'sexmatch.tab'
-iter = [1000, 10]
-sexfile = 'default.sex''
+iteration = [1000, 10]
+sexfile = 'default.sex'
 verbose = 1
 output = sys.stdout
 
 
-# Scan directory for input fits files while excluding program files
+# Scan directory for input fits files while excluding program files and alert if no .fits input images are present
 images = glob.glob('*.fits')
 if outfilename in images:
     images.remove(outfilename)
@@ -87,10 +87,9 @@ def main():
     gypix = gal[gal.colnames[2]]
     gmag = gal[gal.colnames[3]]
     greff = gal[gal.colnames[4]]
-    gellipt = gal[gal.colnames[5]]
-    gsersic = gal[gal.colnames[6]]
-    gab = np.ones(len(gellipt)) - gellipt
-    gpa = gal[gal.colnames[6]]
+    gsersic = gal[gal.colnames[5]]
+    gab = gal[gal.colnames[6]]
+    gpa = gal[gal.colnames[7]]
 
     # Loop through science images
     for w in xrange(l):
@@ -100,37 +99,44 @@ def main():
         sypix = []
         smag = []
         smagerr = []
-        sflux = []
+        sreff = []
         sellipt = []
-        sflags = []
+        spa = []
         sisoarea = []
+        sflags = []
 
         ssimmag = []
         #ssimmagerr = []
         #ssimflux = []
 
-        # Loop through galmodeset images
-        for x in xrange(iter[0]):
+        # Loop through galmodelset images
+        for x in xrange(iteration[0]):
+
+            # Combine Science image with simulated batch image
             image = pyfits.open(images[w])[0].data
-            gimages = pyfits.open(simgalsets+gsum+str(x)+'.fits')[0].data
-
+            gimages = pyfits.open(simgalset+galmodelset+str(x)+'.fits')[0].data
             sexinput = image+gimages
-            cut3 = glob.glob(simimages+mc+'*.fits')
-            if simimages+mc+str(x)+'.fits' in cut3:
-                os.remove(simimages+mc+str(x)+'.fits')
-            pyfits.writeto(simimages+mc+str(x)+'.fits', sexinput)
 
-            # Run new image (mc) through sextractor
-            cmnd = sexdir+'sex '+wdir+simimages+mc+str(x)+'.fits -c '+sexfile
+            # Make sure no file exists with the same name before writing
+            cut3 = glob.glob(simimage+mc+'*.fits')
+            if simimage+mc+str(x)+'.fits' in cut3:
+                os.remove(simimage+mc+str(x)+'.fits')
+
+            # Write science+simulated image to file
+            pyfits.writeto(simimage+mc+str(x)+'.fits', sexinput)
+
+            # Run sextractor in single image mode on new image (mc*.fits)
+            cmnd = sexdir+'sex '+wdir+simimage+mc+str(x)+'.fits -c '+sexfile
             cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name'
             cmnd += ' '+wdir+sexcat+sex+str(x)+'.cat'
             os.system(cmnd)
 
-            # Find mag of gsum images (used for aperture correction)
-            # using the same apertures from the corresponding mc image
-            cmnd2 = sexdir+'sex '+wdir+simimages+mc+str(x)+'.fits,'
+            # Run sextractor in dual image mode:
+            #   Find mag of galmodelset*.fits image (used for aperture correction)
+            #   using the same apertures from the corresponding mc*.fits image
+            cmnd2 = sexdir+'sex '+wdir+simimage+mc+str(x)+'.fits,'
 
-            cmnd2 += ''+wdir+simgalsets+gsum+str(x)+'.fits -c defaultsim.sex'
+            cmnd2 += ''+wdir+simgalset+galmodelset+str(x)+'.fits -c defaultsim.sex'
             cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name'
             cmnd2 += ' '+wdir+simcat+sim+str(x)+'.cat'
             os.system(cmnd2)
@@ -153,7 +159,7 @@ def main():
             isoarea = sc[sc.colnames[7]]
             flags = sc[sc.colnames[8]]
 
-            # Read in sextractor catalog for gsum images
+            # Read in sextractor catalog for galmodelset images
             simc = Table.read(
                 wdir+simcat+sim+str(x)+'.cat',
                 format='ascii.sextractor')
@@ -163,30 +169,30 @@ def main():
             #simflux = simc[simc.colnames[3]]
 
             # Define blank array in which to store sim gal and sex matches
-            xmatch = np.zeros(iter[1])
-            ymatch = np.zeros(iter[1])
-            magmatch = np.zeros(iter[1])
-            magerrmatch = np.zeros(iter[1])
-            fluxmatch = np.zeros(iter[1])
-            elliptmatch = np.zeros(iter[1])
-            flagsmatch = np.zeros(iter[1])
-            isoareamatch = np.zeros(iter[1])
+            xmatch = np.zeros(iteration[1])
+            ymatch = np.zeros(iteration[1])
+            magmatch = np.zeros(iteration[1])
+            magerrmatch = np.zeros(iteration[1])
+            fluxmatch = np.zeros(iteration[1])
+            elliptmatch = np.zeros(iteration[1])
+            flagsmatch = np.zeros(iteration[1])
+            isoareamatch = np.zeros(iteration[1])
 
-            simmagmatch = np.zeros(iter[1])
-            #simmagerrmatch = np.zeros(iter[1])
-            #simfluxmatch = np.zeros(iter[1])
+            simmagmatch = np.zeros(iteration[1])
+            #simmagerrmatch = np.zeros(iteration[1])
+            #simfluxmatch = np.zeros(iteration[1])
 
             # Match batch of sim gal with sextractor detections
-            for z in xrange(iter[1]):
+            for z in xrange(iteration[1]):
 
                 # Match x,y elements from simulated with sextractor detections
                 xbin = np.asarray(np.where(np.logical_and(
-                    xpix >= gxpix[x * iter[1] + z] - pixres,
-                    xpix <= gxpix[x * iter[1] + z] + pixres)))[0]
+                    xpix >= gxpix[x * iteration[1] + z] - pixres,
+                    xpix <= gxpix[x * iteration[1] + z] + pixres)))[0]
 
                 ybin = np.asarray(np.where(np.logical_and(
-                    ypix >= gypix[x * iter[1] + z] - pixres,
-                    ypix <= gypix[x * iter[1] + z] + pixres)))[0]
+                    ypix >= gypix[x * iteration[1] + z] - pixres,
+                    ypix <= gypix[x * iteration[1] + z] + pixres)))[0]
 
 #==============================================================================
 #                 # Flag multiple detections
@@ -299,8 +305,8 @@ def main():
                       default=1,
                       help="Set verbose level to INT [default : %default]",
                       metavar="INT")
-    parser.add_option("-i", "--iter", dest="iter", type=int, nargs=2,
-                      default=(1000, 10),  # arg1:overall iter; arg2:ngal per image
+    parser.add_option("-i", "--iteration", dest="iteration", type=int, nargs=2,
+                      default=(1000, 10),  # arg1:overall iteration; arg2:ngal per image
                       help="Iteration range [default : %default]",
                       metavar="iMin iMax")
     parser.add_option("-x", "--sex", dest="sex",

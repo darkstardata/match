@@ -3,7 +3,7 @@ Created on Wed Feb 26 12:25:30 2014
 Fixed on Mon Jul  2 13:19:56 2014
 
 Project: match
-Subprogram: galgensum
+Subprogram: galset
 
 Author: Andrew Crooks
 Affiliation: Graduate Student @ UC Riverside

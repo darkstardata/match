@@ -83,7 +83,7 @@ if sersic[0] <= 0:
 
 # Generate galfit feed file
 def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_coord, ypix_coord,
-            magnitude, radeff, n_sersic, ab, pa, psf_image='', dust_image=''):
+            magnitude, radeff, n_sersic, ba, pa, psf_image='', dust_image=''):
 
     # Generate string versions for GALFIT config file. Rounds all parameters to 2 decimal places
     sxpix = u'%6s' % xpix_coord
@@ -92,7 +92,7 @@ def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_co
     sreff = u'%8s' % u'%1.2f' % radeff
     ssersic = u'%8s' % u'%2.2f' % n_sersic
     spa = u'%7s' % u'%2.2f' % pa
-    sab = u'%8s' % u'%2.2f' % ab   # b/a = 1 - e
+    sab = u'%8s' % u'%2.2f' % ba   # b/a = 1 - e
 
     # Creating GALFIT feed file for simulated galaxy
     galfitfeed = open(randgal + '.feed', 'w')
@@ -139,7 +139,7 @@ def main():
     tmag = []
     treff = []
     tsersic = []
-    tab = []
+    tba = []
     tpa = []
 
     # Read in table of random numbers, select column of random numbers, and reshape random numer array
@@ -156,7 +156,7 @@ def main():
         rmag = round(r[2]*abs(mag[1]-mag[0])+mag[0], 2)
         rreff = round(r[3]*abs(reff[1]-reff[0])+reff[0], 2)
         rsersic = round(r[5]*abs(sersic[1]-sersic[0])+sersic[0], 2)
-        rab = round(1-r[4]*abs(ellipt[1]-ellipt[0])+ellipt[0], 2)
+        rba = round(1-r[4]*abs(ellipt[1]-ellipt[0])+ellipt[0], 2)
         rpa = round(r[6]*90, 2)
 
         # Store random parameters in lists that will be added to table t
@@ -165,12 +165,12 @@ def main():
         tmag.extend([rmag])
         treff.extend([rreff])
         tsersic.extend([rsersic])
-        tab.extend([rab])
+        tba.extend([rba])
         tpa.extend([rpa])
 
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
-                rxpix, rypix, rmag, rreff, rsersic, rab, rpa)
+                rxpix, rypix, rmag, rreff, rsersic, rba, rpa)
         cmnd1 = galfit + ' ' + randgal + '.feed'
         os.system(cmnd1)
 
@@ -186,7 +186,7 @@ def main():
     t['mag'] = tmag
     t['r_eff'] = treff
     t['n_sersic'] = tsersic
-    t['a/b'] = tab
+    t['b/a'] = tba
     t['pos_angle'] = tpa
 
     t.write(outfilename, format='ascii.tab')
