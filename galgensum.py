@@ -58,29 +58,25 @@ def main():
             gimage = pyfits.open(simgal+galmodel+str(x*iteration[1]+y)+'.fits')
             gimages += gimage[0].data
 
-<<<<<<< HEAD
             # Print message when each image merger is complete
             if x == (iteration[1]-1):
                 if verbose is 1:
                     output.write('\n ' + str(iteration[1]) + ' simulated galaxies merged into a ' +
                                  'single image; ' + galmodelset + str(x * iteration[1] + y) + '.fits \n')
-=======
+
         # Check dir for file with same name as output, remove if present
         cut = glob.glob(simgalset+galmodelset+'*.fits')
         if simgalset+galmodelset+str(x)+'.fits' in cut:
             os.remove(simgalset+galmodelset+str(x)+'.fits')
->>>>>>> parent of 1b8fc03... gal models created
 
         # Write image (simulated batch plus science) to galmodelset*.fits (* is the iteration number)
         pyfits.writeto(simgalset+galmodelset+str(x)+'.fits', gimages)
 
-<<<<<<< HEAD
-=======
         # Print message when each image merger is complete
         if x == (iteration[1]-1):
             if verbose is 1:
-                output.write('\n '+str(iteration[1])+' simulated galaxies merged into a single image; galmodelset'+str(x*iteration[1]+y)+'.fits \n')
->>>>>>> parent of 1b8fc03... gal models created
+                output.write('\n '+str(iteration[1])+' simulated galaxies merged into a single image;'+
+                             ' galmodelset'+str(x*iteration[1]+y)+'.fits \n')
 
 if __name__ == "__main__":
    main()
