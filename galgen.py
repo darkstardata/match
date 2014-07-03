@@ -171,7 +171,7 @@ def main():
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
                 rxpix, rypix, rmag, rreff, rsersic, rab, rpa)
-        cmnd1 = galfit+' ' + randgal + '.feed'
+        cmnd1 = galfit + ' ' + randgal + '.feed'
         os.system(cmnd1)
 
         # Print message when each 1/10th of total iterations are complete
