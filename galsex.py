@@ -1,85 +1,81 @@
 """
-Created at 7:56 PM on 02 Jul 2014
+Created at 4:54 PM on 03 Jul 2014
 
 Project: match
-Subprogram: galsex
+Subprogram: galsex.py
 
 Author: Andrew Crooks
 Affiliation: Graduate Student @ UC Riverside
 
 """
 '''
-Combines science images with galmodelset*.fits images and outputs galcomb_*_*.fitsfor processing with sextractor.
+
 
 '''
+
 import os
 import sys
 import glob                                 # Find files
-import pyfits                               # Open fits files
 
 #Dashboard
 #n = 10 # number of simulated galaxies to create per input image
-zp = 25.9463                                # zeropoint magnitude
-pixres = 2                                  # ~2kpc x ~2kpc postage stamp
-xx = 1089
-yy = 963
+sexdir = '/opt/local/bin/'                  # sextractor dir
+galtab = 'galmodel.tab'
+wdir = os.getcwd()+'/'
 
 
 # Local Subdirectories
 simcomb = 'simcomb/'
 simgalset = 'simgalset/'
+simcat = 'simcat/'
+sexcat = 'sexcat/'
+
 
 # Prefixes for output files
-galtab = 'galmodel.tab'
 galcomb = 'galcomb'                                   # image with n sim gal added
-galmodel = 'galmodel'                                 # sim galaxy file prefix
 galmodelset = 'galmodelset'
+sim = 'sim'
+sex = 'sex'         #
 
-outfile = 'sexmatch'
-outfilename = 'sexmatch.tab'
-wdir = os.getcwd()+'/'
 
-# Set outfile name, number of itertions, and verbosity
+# Set number of itertions, sextractor config file, zeropoint magnitude, and verbosity
 iteration = [1000, 10]
+sexfile = 'default.sex'
+zp = 25.9463                                # zeropoint magnitude
+output = sys.stdout
+verbose = 1
+
 
 # Scan directory for input fits files while excluding program files and alert if no .fits input images are present
 images = glob.glob('*.fits')
-if outfilename in images:
-    images.remove(outfilename)
 
-cut1 = glob.glob(galmodel+'*.fits')
-rem1 = len(cut1)
-for i in xrange(rem1):
-    if cut1[i] in images:
-        images.remove(cut1[i])
-
-cut2 = glob.glob(galcomb+'*.fits')
-rem2 = len(cut2)
-for i in xrange(rem2):
-    if cut2[i] in images:
-        images.remove(cut2[i])
-
-if len(images) == 0:
-    print('No input images. Call with "--help" for help.\n')
-    sys.exit()
 l = len(images)
 
 
-# Loop through science images
-for w in xrange(l):
+def main():
 
-    # Loop through galmodelset images
-    for x in xrange(iteration[0]):
+    # Loop through science image versions
+    for w in xrange(l):
 
-        # Combine Science image with simulated batch image
-        image = pyfits.open(images[w])[0].data
-        gimages = pyfits.open(simgalset + galmodelset + str(x) + '.fits')[0].data
-        sexinput = image+gimages
+        # Loop through galcomb_w_x.fits images
+        for x in xrange(iteration[0]):
 
-        # Make sure no file exists with the same name before writing
-        cut3 = glob.glob(simcomb + galcomb + '*.fits')
-        if simcomb + galcomb + str(x) + '.fits' in cut3:
-            os.remove(simcomb + galcomb + '_' + str(w) + '_' + str(x) + '.fits')
+            # Run sextractor in single image mode on new image (galcomb*.fits)
+            cmnd = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits -c '+sexfile
+            cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name'
+            cmnd += ' '+wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat'
+            os.system(cmnd)
 
-        # Write science+simulated image to file
-        pyfits.writeto(simcomb + galcomb + '_' + str(w) + '_' + str(x) + '.fits', sexinput)
+            # Run sextractor in dual image mode:
+            #   Find mag of galmodelset*.fits image (used for aperture correction)
+            #   using the same apertures from the corresponding galcomb*.fits image
+            cmnd2 = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits,'
+
+            cmnd2 += ''+wdir+simgalset+galmodelset+'_'+str(w)+'_'+str(x)+'.fits -c defaultsim.sex'
+            cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name'
+            cmnd2 += ' '+wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat'
+            os.system(cmnd2)
+
+            if verbose:
+                output.write('Generated sextractor catalog: '
+                             +sex+'_'+str(w)+'_'+str(x)+'.cat \n')

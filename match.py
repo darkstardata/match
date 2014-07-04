@@ -2,7 +2,7 @@
 Created on Sat Jan  4 19:42:20 2014
 
 Project: match
-Subprogram: match
+Subprogram: match.py
 
 Author: Andrew Crooks
 Affiliation: Graduate Student @ UC Riverside
@@ -26,18 +26,18 @@ xx = 1089
 yy = 963
 
 sexdir = '/opt/local/bin/'                  # sextractor dir
-galmodel = 'galmodel'                       # sim galaxy file prefix
 galtab = 'galmodel.tab'
 
 # Local Subdirectories
-simimage = 'simimage/'
+simcomb = 'simcomb/'
 simgalset = 'simgalset/'
 simcat = 'simcat/'
 sexcat = 'sexcat/'
 sexmatch = 'sexmatch/'
 
 # Prefixes for output files
-mc = 'mc'                                   # image with n sim gal added
+galcomb = 'galcomb'                                   # image with n sim gal added
+galmodel = 'galmodel'
 galmodelset = 'galmodelset'
 sim = 'sim'
 sex = 'sex'         #
@@ -64,7 +64,7 @@ for i in xrange(rem1):
     if cut1[i] in images:
         images.remove(cut1[i])
 
-cut2 = glob.glob(mc+'*.fits')
+cut2 = glob.glob(galcomb+'*.fits')
 rem2 = len(cut2)
 for i in xrange(rem2):
     if cut2[i] in images:
@@ -88,10 +88,10 @@ def main():
     gmag = gal[gal.colnames[3]]
     greff = gal[gal.colnames[4]]
     gsersic = gal[gal.colnames[5]]
-    gab = gal[gal.colnames[6]]
+    gba = gal[gal.colnames[6]]
     gpa = gal[gal.colnames[7]]
 
-    # Loop through science images
+    # Loop through science image versions
     for w in xrange(l):
 
         # First Summing array for sextractor gal data
@@ -100,7 +100,7 @@ def main():
         smag = []
         smagerr = []
         sreff = []
-        sellipt = []
+        sba = []
         spa = []
         sisoarea = []
         sflags = []
@@ -109,53 +109,41 @@ def main():
         #ssimmagerr = []
         #ssimflux = []
 
-        # Loop through galmodelset images
+        # Loop through galcomb_w_x.fits images
         for x in xrange(iteration[0]):
 
-            # Combine Science image with simulated batch image
-            image = pyfits.open(images[w])[0].data
-            gimages = pyfits.open(simgalset+galmodelset+str(x)+'.fits')[0].data
-            sexinput = image+gimages
-
-            # Make sure no file exists with the same name before writing
-            cut3 = glob.glob(simimage+mc+'*.fits')
-            if simimage+mc+str(x)+'.fits' in cut3:
-                os.remove(simimage+mc+str(x)+'.fits')
-
-            # Write science+simulated image to file
-            pyfits.writeto(simimage+mc+str(x)+'.fits', sexinput)
-
-            # Run sextractor in single image mode on new image (mc*.fits)
-            cmnd = sexdir+'sex '+wdir+simimage+mc+str(x)+'.fits -c '+sexfile
+            # Run sextractor in single image mode on new image (galcomb*.fits)
+            cmnd = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits -c '+sexfile
             cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd += ' '+wdir+sexcat+sex+str(x)+'.cat'
+            cmnd += ' '+wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat'
             os.system(cmnd)
 
             # Run sextractor in dual image mode:
             #   Find mag of galmodelset*.fits image (used for aperture correction)
-            #   using the same apertures from the corresponding mc*.fits image
-            cmnd2 = sexdir+'sex '+wdir+simimage+mc+str(x)+'.fits,'
+            #   using the same apertures from the corresponding galcomb*.fits image
+            cmnd2 = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits,'
 
-            cmnd2 += ''+wdir+simgalset+galmodelset+str(x)+'.fits -c defaultsim.sex'
+            cmnd2 += ''+wdir+simgalset+galmodelset+'_'+str(w)+'_'+str(x)+'.fits -c defaultsim.sex'
             cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd2 += ' '+wdir+simcat+sim+str(x)+'.cat'
+            cmnd2 += ' '+wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat'
             os.system(cmnd2)
 
             if verbose:
                 output.write('Generated sextractor catalog: '
                              + sex + str(x) + '.cat \n')
 
-            # Read new sextractor catalog for mc images into table
+            # Read new sextractor catalog for galcomb images into table
             sc = Table.read(
                 wdir+sexcat+sex+str(x)+'.cat',
                 format='ascii.sextractor')
 
-            xpix = sc[sc.colnames[4]]
-            ypix = sc[sc.colnames[5]]
-            mag = sc[sc.colnames[1]]
-            magerr = sc[sc.colnames[2]]
-            flux = sc[sc.colnames[3]]
-            ellipt = sc[sc.colnames[6]]
+            xpix = sc[sc.colnames[1]]
+            ypix = sc[sc.colnames[2]]
+            mag = sc[sc.colnames[3]]
+            magerr = sc[sc.colnames[4]]
+            reff = sc[sc.colnames[5]]
+            ab = sc[sc.colnames[6]]
+            pa = sc[sc.colnames[7]]
             isoarea = sc[sc.colnames[7]]
             flags = sc[sc.colnames[8]]
 
@@ -211,8 +199,8 @@ def main():
                     ymatch[z] = ypix[np.intersect1d(xbin, ybin)[0]]
                     magmatch[z] = mag[np.intersect1d(xbin, ybin)[0]]
                     magerrmatch[z] = magerr[np.intersect1d(xbin, ybin)[0]]
-                    fluxmatch[z] = flux[np.intersect1d(xbin, ybin)[0]]
-                    elliptmatch[z] = ellipt[np.intersect1d(xbin, ybin)[0]]
+                    reffmatch[z] = reff[np.intersect1d(xbin, ybin)[0]]
+                    abmatch[z] = ellipt[np.intersect1d(xbin, ybin)[0]]
                     flagsmatch[z] = flags[np.intersect1d(xbin, ybin)[0]]
                     isoareamatch[z] = isoarea[np.intersect1d(xbin, ybin)[0]]
 
