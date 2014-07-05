@@ -112,26 +112,6 @@ def main():
         # Loop through galcomb_w_x.fits images
         for x in xrange(iteration[0]):
 
-            # Run sextractor in single image mode on new image (galcomb*.fits)
-            cmnd = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits -c '+sexfile
-            cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd += ' '+wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat'
-            os.system(cmnd)
-
-            # Run sextractor in dual image mode:
-            #   Find mag of galmodelset*.fits image (used for aperture correction)
-            #   using the same apertures from the corresponding galcomb*.fits image
-            cmnd2 = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits,'
-
-            cmnd2 += ''+wdir+simgalset+galmodelset+'_'+str(w)+'_'+str(x)+'.fits -c defaultsim.sex'
-            cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd2 += ' '+wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat'
-            os.system(cmnd2)
-
-            if verbose:
-                output.write('Generated sextractor catalog: '
-                             + sex + str(x) + '.cat \n')
-
             # Read new sextractor catalog for galcomb images into table
             sc = Table.read(
                 wdir+sexcat+sex+str(x)+'.cat',
@@ -275,32 +255,3 @@ def main():
             if verbose:
                 output.write('\n data written to all'
                 +outfile+str(w)+'.tab \n')
-
-
-# Vestigial code
-'''
-    # Setup user options
-    usage = "usage: %prog [options] \n"
-    usage += "type %prog -h for help"
-    parser = OptionParser(usage)
-    parser.add_option("-o", "--out",
-                      dest="outfilename",
-                      default="sexmatch.tab",
-                      help="Output to FILE [default : %default]",
-                      metavar="FILE")
-    parser.add_option("-v", "--verbose",
-                      dest="verbose", type=int,
-                      default=1,
-                      help="Set verbose level to INT [default : %default]",
-                      metavar="INT")
-    parser.add_option("-i", "--iteration", dest="iteration", type=int, nargs=2,
-                      default=(1000, 10),  # arg1:overall iteration; arg2:ngal per image
-                      help="Iteration range [default : %default]",
-                      metavar="iMin iMax")
-    parser.add_option("-x", "--sex", dest="sex",
-                      default="default.sex",
-                      help="Sextractor file [default : %default]",
-                      metavar="FILE")
-
-    (options, args) = parser.parse_args()
-'''

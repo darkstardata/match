@@ -25,6 +25,7 @@ as well as a catalog file of the simulated galaxies properties which include
 Assumed Cosmology: h = 0.71, Omega_M = 0.27, Omega_vac = 0.73, z = 1.9.
 (for determining proper range for effective radii in pixels using pixel scale and cosmology)
 
+Runtime ~ 14 hrs
 """
 
 import os
