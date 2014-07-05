@@ -222,7 +222,7 @@ for w in xrange(l):
     t['sex_mag'] = list(smag)
     t['sex_mag-err'] = list(smagerr)
     t['sim_mag'] = list(ssimmag)
-    t['sim_mag-err'] = list(simmagerr)
+    t['sim_mag-err'] = list(ssimmagerr)
     t['sex_reff'] = list(sreff)
     t['sex_a/b'] = list(sab)
     t['sex_PA'] = list(spa)
