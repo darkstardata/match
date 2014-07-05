@@ -231,3 +231,6 @@ def main():
             t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
             if verbose:
                 output.write('\n data written to all'+sexmatch+str(w)+'.tab \n')
+
+if __name__ == "__main__":
+    main()
