@@ -110,8 +110,8 @@ for w in xrange(l):
         simc = Table.read(wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat',
                           format='ascii.sextractor')
 
-        simmag = simc[simc.colnames[1]]
-        simmagerr = simc[simc.colnames[2]]
+        simmag = simc[simc.colnames[3]]
+        simmagerr = simc[simc.colnames[4]]
 
         # Define blank array in which to store sim gal and sex matches
         xmatch = np.zeros(iteration[1])
@@ -206,30 +206,30 @@ for w in xrange(l):
 
         f.write(wdir+sexmatch+outfile+'_'+str(w)+'_'+str(x)+'.tab', format='ascii.tab')
 
-        t = Table()
-        t['ID'] = gid
+    t = Table()
+    t['ID'] = gid
 
-        t['xpix'] = gxpix
-        t['ypix'] = gypix
-        t['mag'] = gmag
-        t['reff'] = greff
-        t['nsersic'] = gsersic
-        t['b/a'] = gba
-        t['PA'] = gpa
+    t['xpix'] = gxpix
+    t['ypix'] = gypix
+    t['mag'] = gmag
+    t['reff'] = greff
+    t['nsersic'] = gsersic
+    t['b/a'] = gba
+    t['PA'] = gpa
 
-        t['sex_xpix'] = list(sxpix)
-        t['sex_ypix'] = list(sypix)
-        t['sex_mag'] = list(smag)
-        t['sex_mag-err'] = list(smagerr)
-        t['sim_mag'] = list(ssimmag)
-        t['sim_mag-err'] = list(simmagerr)
-        t['sex_reff'] = list(sreff)
-        t['sex_a/b'] = list(sab)
-        t['sex_PA'] = list(spa)
+    t['sex_xpix'] = list(sxpix)
+    t['sex_ypix'] = list(sypix)
+    t['sex_mag'] = list(smag)
+    t['sex_mag-err'] = list(smagerr)
+    t['sim_mag'] = list(ssimmag)
+    t['sim_mag-err'] = list(simmagerr)
+    t['sex_reff'] = list(sreff)
+    t['sex_a/b'] = list(sab)
+    t['sex_PA'] = list(spa)
 
-        t['isoarea'] = list(sisoarea)
-        t['sflags'] = list(sflags)
+    t['isoarea'] = list(sisoarea)
+    t['sflags'] = list(sflags)
 
-        t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
-        if verbose:
-            output.write('\n data written to all'+sexmatch+str(w)+'.tab \n')
+    t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
+    if verbose:
+        output.write('\n data written to all'+sexmatch+str(w)+'.tab \n')
