@@ -25,6 +25,7 @@ wdir = os.getcwd()+'/'
 
 
 # Local Subdirectories
+sexconfig = 'sexconfig/'
 simcomb = 'simcomb/'
 simgalset = 'simgalset/'
 simcat = 'simcat/'
@@ -40,7 +41,8 @@ sex = 'sex'         #
 
 # Set number of itertions, sextractor config file, zeropoint magnitude, and verbosity
 iteration = [1000, 10]
-sexfile = 'default.sex'
+defaultsex = 'default.sex'
+defaultsim = 'defaultsim.sex'
 zp = 25.9463                                # zeropoint magnitude
 output = sys.stdout
 verbose = 1
@@ -52,30 +54,27 @@ images = glob.glob('*.fits')
 l = len(images)
 
 
-def main():
+# Loop through science image versions
+for w in xrange(l):
 
-    # Loop through science image versions
-    for w in xrange(l):
+    # Loop through galcomb_w_x.fits images
+    for x in xrange(iteration[0]):
 
-        # Loop through galcomb_w_x.fits images
-        for x in xrange(iteration[0]):
+        # Run sextractor in single image mode on new image (galcomb*.fits)
+        cmnd = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits -c '+sexconfig+defaultsex
+        cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name '
+        cmnd += wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat'
+        os.system(cmnd)
 
-            # Run sextractor in single image mode on new image (galcomb*.fits)
-            cmnd = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits -c '+sexfile
-            cmnd += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd += ' '+wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat'
-            os.system(cmnd)
+        # Run sextractor in dual image mode:
+        #   Find mag of galmodelset*.fits image (used for aperture correction)
+        #   using the same apertures from the corresponding galcomb*.fits image
+        cmnd2 = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits,'
+        cmnd2 += wdir+simgalset+galmodelset+str(x)+'.fits -c '+sexconfig+defaultsim
+        cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name '
+        cmnd2 += wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat'
+        os.system(cmnd2)
 
-            # Run sextractor in dual image mode:
-            #   Find mag of galmodelset*.fits image (used for aperture correction)
-            #   using the same apertures from the corresponding galcomb*.fits image
-            cmnd2 = sexdir+'sex '+wdir+simcomb+galcomb+'_'+str(w)+'_'+str(x)+'.fits,'
-
-            cmnd2 += ''+wdir+simgalset+galmodelset+'_'+str(w)+'_'+str(x)+'.fits -c defaultsim.sex'
-            cmnd2 += ' -mag_zeropoint '+str(zp)+' -catalog_name'
-            cmnd2 += ' '+wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat'
-            os.system(cmnd2)
-
-            if verbose:
-                output.write('Generated sextractor catalog: '
-                             +sex+'_'+str(w)+'_'+str(x)+'.cat \n')
+        if verbose:
+            output.write('Generated sextractor catalog: '
+                         + sex+'_'+str(w)+'_'+str(x)+'.cat \n')

@@ -13,10 +13,7 @@ import os
 import sys
 import glob                                 # Find files
 import numpy as np
-import pyfits                               # Open fits files
-from optparse import OptionParser           # Parse options
 from astropy.table import Table
-from astropy.io import fits
 
 #Dashboard
 #n = 10 # number of simulated galaxies to create per input image
@@ -41,38 +38,20 @@ galmodel = 'galmodel'
 galmodelset = 'galmodelset'
 sim = 'sim'
 sex = 'sex'         #
-outfile = 'sexmatch'
 wdir = os.getcwd()+'/'
 
 
 # Set outfile name, number of itertions, and verbosity
 outfilename = 'sexmatch.tab'
+outfile = 'sexmatch'
 iteration = [1000, 10]
 sexfile = 'default.sex'
 verbose = 1
 output = sys.stdout
 
 
-# Scan directory for input fits files while excluding program files and alert if no .fits input images are present
+# Scan directory for input fits
 images = glob.glob('*.fits')
-if outfilename in images:
-    images.remove(outfilename)
-
-cut1 = glob.glob(galmodel+'*.fits')
-rem1 = len(cut1)
-for i in xrange(rem1):
-    if cut1[i] in images:
-        images.remove(cut1[i])
-
-cut2 = glob.glob(galcomb+'*.fits')
-rem2 = len(cut2)
-for i in xrange(rem2):
-    if cut2[i] in images:
-        images.remove(cut2[i])
-
-if len(images) == 0:
-    print('No input images. Call with "--help" for help.\n')
-    sys.exit()
 l = len(images)
 
 
@@ -100,22 +79,20 @@ def main():
         smag = []
         smagerr = []
         sreff = []
-        sba = []
+        sab = []
         spa = []
         sisoarea = []
         sflags = []
 
         ssimmag = []
-        #ssimmagerr = []
-        #ssimflux = []
+        ssimmagerr = []
 
         # Loop through galcomb_w_x.fits images
         for x in xrange(iteration[0]):
 
             # Read new sextractor catalog for galcomb images into table
-            sc = Table.read(
-                wdir+sexcat+sex+str(x)+'.cat',
-                format='ascii.sextractor')
+            sc = Table.read(wdir+sexcat+sex+'_'+str(w)+'_'+str(x)+'.cat',
+                            format='ascii.sextractor')
 
             xpix = sc[sc.colnames[1]]
             ypix = sc[sc.colnames[2]]
@@ -128,39 +105,35 @@ def main():
             flags = sc[sc.colnames[8]]
 
             # Read in sextractor catalog for galmodelset images
-            simc = Table.read(
-                wdir+simcat+sim+str(x)+'.cat',
-                format='ascii.sextractor')
+            simc = Table.read(wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat',
+                              format='ascii.sextractor')
 
             simmag = simc[simc.colnames[1]]
-            #simmagerr = simc[simc.colnames[2]]
-            #simflux = simc[simc.colnames[3]]
+            simmagerr = simc[simc.colnames[2]]
 
             # Define blank array in which to store sim gal and sex matches
             xmatch = np.zeros(iteration[1])
             ymatch = np.zeros(iteration[1])
             magmatch = np.zeros(iteration[1])
             magerrmatch = np.zeros(iteration[1])
-            fluxmatch = np.zeros(iteration[1])
-            elliptmatch = np.zeros(iteration[1])
-            flagsmatch = np.zeros(iteration[1])
+            reffmatch = np.zeros(iteration[1])
+            abmatch = np.zeros(iteration[1])
+            pamatch = np.zeros(iteration[1])
             isoareamatch = np.zeros(iteration[1])
+            flagsmatch = np.zeros(iteration[1])
 
             simmagmatch = np.zeros(iteration[1])
-            #simmagerrmatch = np.zeros(iteration[1])
-            #simfluxmatch = np.zeros(iteration[1])
+            simmagerrmatch = np.zeros(iteration[1])
 
             # Match batch of sim gal with sextractor detections
             for z in xrange(iteration[1]):
 
                 # Match x,y elements from simulated with sextractor detections
-                xbin = np.asarray(np.where(np.logical_and(
-                    xpix >= gxpix[x * iteration[1] + z] - pixres,
-                    xpix <= gxpix[x * iteration[1] + z] + pixres)))[0]
+                xbin = np.asarray(np.where(np.logical_and(xpix >= gxpix[x * iteration[1] + z] - pixres,
+                                                          xpix <= gxpix[x * iteration[1] + z] + pixres)))[0]
 
-                ybin = np.asarray(np.where(np.logical_and(
-                    ypix >= gypix[x * iteration[1] + z] - pixres,
-                    ypix <= gypix[x * iteration[1] + z] + pixres)))[0]
+                ybin = np.asarray(np.where(np.logical_and(ypix >= gypix[x * iteration[1] + z] - pixres,
+                                                          ypix <= gypix[x * iteration[1] + z] + pixres)))[0]
 
 #==============================================================================
 #                 # Flag multiple detections
@@ -180,78 +153,80 @@ def main():
                     magmatch[z] = mag[np.intersect1d(xbin, ybin)[0]]
                     magerrmatch[z] = magerr[np.intersect1d(xbin, ybin)[0]]
                     reffmatch[z] = reff[np.intersect1d(xbin, ybin)[0]]
-                    abmatch[z] = ellipt[np.intersect1d(xbin, ybin)[0]]
-                    flagsmatch[z] = flags[np.intersect1d(xbin, ybin)[0]]
+                    abmatch[z] = ab[np.intersect1d(xbin, ybin)[0]]
+                    pamatch[z] = pa[np.intersect1d(xbin, ybin)[0]]
                     isoareamatch[z] = isoarea[np.intersect1d(xbin, ybin)[0]]
+                    flagsmatch[z] = flags[np.intersect1d(xbin, ybin)[0]]
 
                     simmagmatch[z] = simmag[np.intersect1d(xbin, ybin)[0]]
-                    #simmagerrmatch[z] = simmagerr[np.intersect1d(xbin,ybin)[0]]
-                    #simfluxmatch[z] = simflux[np.intersect1d(xbin,ybin)[0]]
+                    simmagerrmatch[z] = simmagerr[np.intersect1d(xbin, ybin)[0]]
+
                 # Flag multiple detections
                 if len(np.intersect1d(xbin, ybin)) > 1:
                     xmatch[z] += -1
                     ymatch[z] += -1
                     magmatch[z] += -1
                     magerrmatch[z] += -1
-                    fluxmatch[z] += -1
-                    elliptmatch[z] += -1
-                    flagsmatch[z] += -1
+                    reffmatch[z] += -1
+                    abmatch[z] += -1
+                    pamatch[z] += -1
                     isoareamatch[z] += -1
+                    flagsmatch[z] += -1
 
                     simmagmatch[z] += -1
-                    #simmagerrmatch[z] += -1
-                    #simfluxmatch[z] += -1
+                    simmagerrmatch[z] += -1
 
             # Append data to aggregate list
             sxpix.extend(xmatch)
             sypix.extend(ymatch)
             smag.extend(magmatch)
             smagerr.extend(magerrmatch)
-            sflux.extend(fluxmatch)
-            sellipt.extend(elliptmatch)
-            sflags.extend(flagsmatch)
+            sreff.extend(reffmatch)
+            sab.extend(abmatch)
+            spa.extend(pamatch)
             sisoarea.extend(isoareamatch)
+            sflags.extend(flagsmatch)
 
             ssimmag.extend(simmagmatch)
-            #ssimmagerr.extend(simmagerrmatch)
-            #ssimflux.extend(simfluxmatch)
+            ssimmagerr.extend(simmagerrmatch)
 
             # Write data to incremental tables
             f = Table()
-            f['simmagmatch'] = simmagmatch
-            f['magmatch'] = magmatch
             f['xmatch'] = xmatch
             f['ymatch'] = ymatch
-            #f['magerrmatch'] = magerrmatch
-            #f['fluxmatch'] = fluxmatch
-            #f['elliptmatch'] = elliptmatch
+            f['simmagmatch'] = simmagmatch
+            f['magmatch'] = magmatch
+            f['magerrmatch'] = magerrmatch
+            f['reffmatch'] = reffmatch
+            f['abmatch'] = abmatch
+            f['pamatch'] = pamatch
             f['flagsmatch'] = flagsmatch
 
-            f.write(wdir+sexmatch+outfile+str(x)+'.tab', format='ascii.tab')
-
-            ### Insert galfitsersic call here
+            f.write(wdir+sexmatch+outfile+'_'+str(w)+'_'+str(x)+'.tab', format='ascii.tab')
 
             t = Table()
             t['ID'] = gid
-            t['mag'] = gmag
-        #    t['r_eff'] = greff
-        #    t['ellipt'] = gellipt
-        #    t['pos_angle'] = gpa
-        #    t['sxpix'] = list(sxpix)
-        #    t['sypix'] = list(sypix)
-            t['simmag'] = list(ssimmag)
-            t['sexmag'] = list(smag)
-        #    t['smag-err'] = list(smagerr)
-        #    t['simmag-err'] = list(simmagerr)
-        #    t['sr_eff'] = list(sreff)
-        #    t['sellipt'] = list(sellipt)
             t['xpix'] = gxpix
             t['ypix'] = gypix
+            t['mag'] = gmag
+            t['reff'] = greff
             t['nsersic'] = gsersic
+            t['b/a'] = gba
+            t['PA'] = gpa
+
+            t['sex_xpix'] = list(sxpix)
+            t['sex_ypix'] = list(sypix)
+            t['sex_mag'] = list(smag)
+            t['sex_mag-err'] = list(smagerr)
+            t['sim_mag'] = list(ssimmag)
+            t['sim_mag-err'] = list(simmagerr)
+            t['sex_reff'] = list(sreff)
+            t['sex_a/b'] = list(sab)
+            t['sex_PA'] = list(spa)
+
             t['isoarea'] = list(sisoarea)
             t['sflags'] = list(sflags)
 
             t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
             if verbose:
-                output.write('\n data written to all'
-                +outfile+str(w)+'.tab \n')
+                output.write('\n data written to all'+sexmatch+str(w)+'.tab \n')
