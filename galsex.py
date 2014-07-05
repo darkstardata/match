@@ -9,7 +9,9 @@ Affiliation: Graduate Student @ UC Riverside
 
 """
 '''
-
+Runs sextractor in single image mode on galcomb*.fits
+and runs in dual image mode on galmodelset*.fits to
+compare mag inside MAG_ISO aperture in both images.
 
 Runtime ~ 8 hr  10 min
 '''
