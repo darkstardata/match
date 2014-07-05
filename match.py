@@ -103,8 +103,8 @@ for w in xrange(l):
         reff = sc[sc.colnames[5]]
         ab = sc[sc.colnames[6]]
         pa = sc[sc.colnames[7]]
-        isoarea = sc[sc.colnames[7]]
-        flags = sc[sc.colnames[8]]
+        isoarea = sc[sc.colnames[8]]
+        flags = sc[sc.colnames[9]]
 
         # Read in sextractor catalog for galmodelset images
         simc = Table.read(wdir+simcat+sim+'_'+str(w)+'_'+str(x)+'.cat',

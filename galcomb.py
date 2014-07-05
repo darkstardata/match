@@ -11,7 +11,7 @@ Affiliation: Graduate Student @ UC Riverside
 '''
 Combines science images with galmodelset*.fits images and outputs galcomb_*_*.fits for processing with sextractor.
 
-Runtime ~ 1 hr 5 min
+Runtime ~ 1 hr  5 min
 '''
 import os
 import sys

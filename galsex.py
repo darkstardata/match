@@ -11,6 +11,7 @@ Affiliation: Graduate Student @ UC Riverside
 '''
 
 
+Runtime ~ 8 hr  10 min
 '''
 
 import os

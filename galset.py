@@ -11,7 +11,7 @@ Affiliation: Graduate Student @ UC Riverside
 '''
 Combines single simulated galaxy images into batch images with the number of galaxies equal to iteration[1]
 
-Runtime ~ 8 minutes
+Runtime ~ 8 min
 '''
 import os
 import sys
