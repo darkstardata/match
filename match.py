@@ -206,6 +206,7 @@ def main():
 
             t = Table()
             t['ID'] = gid
+
             t['xpix'] = gxpix
             t['ypix'] = gypix
             t['mag'] = gmag
