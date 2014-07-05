@@ -15,6 +15,7 @@ import glob                                 # Find files
 import numpy as np
 from astropy.table import Table
 
+
 #Dashboard
 #n = 10 # number of simulated galaxies to create per input image
 zp = 25.9463                                # zeropoint magnitude
@@ -22,8 +23,10 @@ pixres = 2                                  # ~2kpc x ~2kpc postage stamp
 xx = 1089
 yy = 963
 
+
 sexdir = '/opt/local/bin/'                  # sextractor dir
 galtab = 'galmodel.tab'
+
 
 # Local Subdirectories
 simcomb = 'simcomb/'
@@ -31,6 +34,7 @@ simgalset = 'simgalset/'
 simcat = 'simcat/'
 sexcat = 'sexcat/'
 sexmatch = 'sexmatch/'
+
 
 # Prefixes for output files
 galcomb = 'galcomb'                                   # image with n sim gal added
