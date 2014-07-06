@@ -8,6 +8,12 @@ Author: Andrew Crooks
 Affiliation: Graduate Student @ UC Riverside
 
 """
+'''
+Matches detections from sextractor catalogs from the galcomb*.fits
+with sextractor catalogs from galmodelset*.fits
+
+Runtime ~ 3 hr
+'''
 
 import os
 import sys
@@ -111,7 +117,7 @@ for w in xrange(l):
                           format='ascii.sextractor')
 
         simmag = simc[simc.colnames[3]]
-        simmagerr = simc[simc.colnames[4]]
+        #simmagerr = simc[simc.colnames[4]]
 
         # Define blank array in which to store sim gal and sex matches
         xmatch = np.zeros(iteration[1])
@@ -125,7 +131,7 @@ for w in xrange(l):
         flagsmatch = np.zeros(iteration[1])
 
         simmagmatch = np.zeros(iteration[1])
-        simmagerrmatch = np.zeros(iteration[1])
+        #simmagerrmatch = np.zeros(iteration[1])
 
         # Match batch of sim gal with sextractor detections
         for z in xrange(iteration[1]):
@@ -161,7 +167,7 @@ for w in xrange(l):
                 flagsmatch[z] = flags[np.intersect1d(xbin, ybin)[0]]
 
                 simmagmatch[z] = simmag[np.intersect1d(xbin, ybin)[0]]
-                simmagerrmatch[z] = simmagerr[np.intersect1d(xbin, ybin)[0]]
+                #simmagerrmatch[z] = simmagerr[np.intersect1d(xbin, ybin)[0]]
 
             # Flag multiple detections
             if len(np.intersect1d(xbin, ybin)) > 1:
@@ -176,7 +182,7 @@ for w in xrange(l):
                 flagsmatch[z] += -1
 
                 simmagmatch[z] += -1
-                simmagerrmatch[z] += -1
+                #simmagerrmatch[z] += -1
 
         # Append data to aggregate list
         sxpix.extend(xmatch)
@@ -190,19 +196,30 @@ for w in xrange(l):
         sflags.extend(flagsmatch)
 
         ssimmag.extend(simmagmatch)
-        ssimmagerr.extend(simmagerrmatch)
+        #ssimmagerr.extend(simmagerrmatch)
 
         # Write data to incremental tables
         f = Table()
-        f['xmatch'] = xmatch
-        f['ymatch'] = ymatch
-        f['simmagmatch'] = simmagmatch
-        f['magmatch'] = magmatch
-        f['magerrmatch'] = magerrmatch
-        f['reffmatch'] = reffmatch
-        f['abmatch'] = abmatch
-        f['pamatch'] = pamatch
-        f['flagsmatch'] = flagsmatch
+        f['x   '] = xmatch
+        f['y   '] = ymatch
+        f['simmag'] = simmagmatch
+        f['mag '] = magmatch
+        f['magerr'] = magerrmatch
+        f['reff'] = reffmatch
+        f['ab  '] = abmatch
+        f['pa  '] = pamatch
+        f['flags'] = flagsmatch
+
+        # Format table data
+        f['x   '].format = '%7.2f'
+        f['y   '].format = '%7.2f'
+        f['simmag'].format = '%5.2f'
+        f['mag '].format = '%5.2f'
+        f['magerr'].format = '%6.4f'
+        f['reff'].format = '%4.2f'
+        f['ab  '].format = '%7.2f'
+        f['pa  '].format = '%5.2f'
+        f['flags'].format = '%3d'
 
         f.write(wdir+sexmatch+outfile+'_'+str(w)+'_'+str(x)+'.tab', format='ascii.tab')
 
@@ -222,13 +239,38 @@ for w in xrange(l):
     t['sex_mag'] = list(smag)
     t['sex_mag-err'] = list(smagerr)
     t['sim_mag'] = list(ssimmag)
-    t['sim_mag-err'] = list(ssimmagerr)
+    #t['sim_mag-err'] = list(ssimmagerr)
     t['sex_reff'] = list(sreff)
     t['sex_a/b'] = list(sab)
     t['sex_PA'] = list(spa)
 
     t['isoarea'] = list(sisoarea)
     t['sflags'] = list(sflags)
+
+    # Format table data
+    t['ID'].format = '%4d'
+
+    t['xpix'].format = '%7.2f'
+    t['ypix'].format = '%7.2f'
+    t['mag'].format = '%5.2f'
+    t['reff'].format = '%4.2f'
+    t['nsersic'].format = '%5.2f'
+    t['b/a'].format = '%4.2f'
+    t['PA'].format = '%5.2f'
+
+    t['sex_xpix'].format = '%7.2f'
+    t['sex_ypix'].format = '%7.2f'
+    t['sex_mag'].format = '%5.2f'
+    t['sex_mag-err'].format = '%6.4f'
+    t['sim_mag'].format = '%5.2f'
+    #t['sim_mag-err'].format = '%6.4f'
+    t['sex_reff'].format = '%4.2f'
+    t['sex_a/b'].format = '%7.2f'
+    t['sex_PA'].format = '%5.2f'
+
+    t['isoarea'].format = '%3d'
+    t['sflags'].format = '%3d'
+
 
     t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
     if verbose:
