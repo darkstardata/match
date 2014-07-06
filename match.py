@@ -9,7 +9,7 @@ Affiliation: Graduate Student @ UC Riverside
 
 """
 '''
-Matches detections from sextractor catalogs from the galcomb*.fits
+Matches detections in sextractor catalogs from the galcomb*.fits
 with sextractor catalogs from galmodelset*.fits
 
 Runtime ~ 3 hr
