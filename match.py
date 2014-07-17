@@ -9,8 +9,8 @@ Affiliation: Graduate Student @ UC Riverside
 
 """
 '''
-Matches detections in sextractor catalogs from the galcomb*.fits
-with sextractor catalogs from galmodelset*.fits
+Matches detections in sextractor catalogs from
+galcomb*.fits and galmodelset*.fits
 
 Runtime ~ 3 hr
 '''
@@ -270,7 +270,6 @@ for w in xrange(l):
 
     t['isoarea'].format = '%3d'
     t['sflags'].format = '%3d'
-
 
     t.write(wdir+'all'+outfile+str(w)+'.tab', format='ascii.tab')
     if verbose:

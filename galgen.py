@@ -41,7 +41,7 @@ galfit = '/usr/local/bin/galfit'                                                
 randgal = 'randgal'                                                                 # galfit config file prefix
 galmodel = 'galmodel'                                                               # sim galaxy file prefix
 random = 'random.tab'                                                               # input list of true random numbers
-psfimage = ' '                                                                      # PSF only needed for ground images
+psfimage = 'psf_f160W.fits'
 dustimage = ' '
 
 
@@ -62,8 +62,8 @@ output = sys.stdout
 # Parameter ranges
 iteration = 10000
 reff = [0.027, 2.4]                                                                    # 0.3 kpc -> 2.6 kpc @ z~1.9
-ellipt = [0.0, 0.9]
-mag = [23.0, 28.0]
+ellipt = [0.0, 1.0]
+mag = [18.0, 28.0]
 sersic = [0.01, 12.5]
 
 
@@ -106,7 +106,7 @@ def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_co
     galfitfeed.write('F) '+dust_image+'         # Pixel mask (ASCII file or FITS file with non-0 values)\n')
     galfitfeed.write('G) none                  # Parameter constraint file (ASCII)\n')
     galfitfeed.write('H) 1 '+str(xpix_image)+' 1 '+str(ypix_image)+'   # Image region to fit (xmin xmax ymin ymax)\n')
-    galfitfeed.write('I) 120   120             # Size of convolution box (x y)\n')
+    galfitfeed.write('I) 1089   963             # Size of convolution box (x y)\n')
     galfitfeed.write('J) ' + str(zeropoint) + '       # Magnitude photometric zeropoint\n')
     galfitfeed.write('K) '+str(pixelscale)+' '+str(pixelscale)+'           # Plate scale (dx dy)\n')
     galfitfeed.write('O) regular               # Display type (regular, curses, both)\n')
@@ -150,6 +150,7 @@ def main():
 
     # Generate batch of simulated galaxies (total = iteration)
     for x in xrange(iteration):
+#   for x in range(8749,9999,1):
 
         r = rand[x]
         rxpix = round(r[0]*xpix, 2)
@@ -171,7 +172,7 @@ def main():
 
         # Generate galfit feed file and run galfit
         galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
-                rxpix, rypix, rmag, rreff, rsersic, rba, rpa)
+                rxpix, rypix, rmag, rreff, rsersic, rba, rpa, psf_image = psfimage)
         cmnd1 = galfit + ' ' + randgal + '.feed'
         os.system(cmnd1)
 
