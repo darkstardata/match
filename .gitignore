@@ -4,4 +4,6 @@ simimage/
 simcat/
 sexcat/
 sexmatch/
+psf/
+fieldimage/
 *.fits
