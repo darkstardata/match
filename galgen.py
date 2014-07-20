@@ -35,36 +35,72 @@ from astropy.table import Table
 
 
 #Dashboard
+
 wdir = os.getcwd()+'/'
 # galfit='/home/lokiz/bin/galfit'                                                   # Linux location
 galfit = '/usr/local/bin/galfit'                                                    # Mac location
 randgal = 'randgal'                                                                 # galfit config file prefix
 galmodel = 'galmodel'                                                               # sim galaxy file prefix
 random = 'random.tab'                                                               # input list of true random numbers
-psfimage = 'psf_f160W.fits'
 dustimage = ' '
-
-
-zp = 25.9463    # zeropoint magnitude
-xpix = 1089
-ypix = 963
-pixscl = 0.128  # "/pix
-xxpix = u'%7s' % xpix
-yypix = u'%7s' % ypix
-
 
 # Set outfile name, and verbosity
 outfilename = 'galmodel.tab'
 verbose = 1
 output = sys.stdout
 
+# Output postage stamp dimensions
+xout = 300
+yout = 300
+
+# Convolution box dimensions
+xconv = 300
+yconv = 300
 
 # Parameter ranges
 iteration = 10000
-reff = [0.027, 2.4]                                                                    # 0.3 kpc -> 2.6 kpc @ z~1.9
-ellipt = [0.0, 1.0]
+#reff = [0.28, 2.39]                                     # Bootes fields 0.3 -> 2.6 kpc @ z~1.9
+reff = [0.59, 5.10]                                     # UDS WFC3/IR fields 0.3 -> 2.6 kpc @ z~1.9
+#reff = [1.15, 10.20]                                    # UDS WFC/ACS fields 0.3 -> 2.6 kpc @ z~1.9
+ellipt = [0.0, 0.9]
 mag = [18.0, 28.0]
 sersic = [0.01, 12.5]
+
+
+# Field and Filter selector
+w = 0       # Field index
+z = 0       # Filter index
+
+fields = ['uds', 'bootes']
+filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
+zeropt = [25.96, 26.25, 25.94333, 26.49113, 26.94]
+pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]
+
+field = fields[w]
+filt = filters[z]
+zp = zeropt[z]    # zeropoint magnitude
+pixscl = pixel_scale[z]    # "/pix
+psfimage = wdir+'psf/'+'psf_'+filt+'.fits'
+
+xpixels_uds = [30720, 30720, 61440, 61440, 61440]
+ypixels_uds = [12800, 12800, 25600, 25600, 25600]
+
+xpixels_bootes = 1089
+ypixels_bootes = 963
+
+if field is 'uds':
+    xpix = xpixels_uds[z]
+    ypix = ypixels_uds[z]
+
+elif field is 'bootes':
+    xpix = xpixels_bootes
+    ypix = ypixels_bootes
+
+else:
+    sys.exit('Error: No Field Selected!')
+
+xxpix = u'%7s' % xpix
+yypix = u'%7s' % ypix
 
 
 # Prevent code breaks
@@ -83,17 +119,17 @@ if sersic[0] <= 0:
 
 
 # Generate galfit feed file
-def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_coord, ypix_coord,
+def galfeed(output_image, xpix_image, ypix_image, xpix_conv, ypix_conv, zeropoint, pixelscale, xpix_coord, ypix_coord,
             magnitude, radeff, n_sersic, ba, pa, psf_image='', dust_image=''):
 
     # Generate string versions for GALFIT config file. Rounds all parameters to 2 decimal places
-    sxpix = u'%6s' % xpix_coord
-    sypix = u'%6s' % u'%4.2f' % ypix_coord
-    smag = u'%7s' % u'%2.2f' % magnitude
-    sreff = u'%8s' % u'%1.2f' % radeff
-    ssersic = u'%8s' % u'%2.2f' % n_sersic
-    spa = u'%7s' % u'%2.2f' % pa
-    sab = u'%8s' % u'%2.2f' % ba   # b/a = 1 - e
+    sxpix = u'%7s' % u'%7.2f' % xpix_coord
+    sypix = u'%7s' % u'%7.2f' % ypix_coord
+    smag = u'%5s' % u'%5.2f' % magnitude
+    sreff = u'%8s' % u'%3.2f' % radeff
+    ssersic = u'%5s' % u'%5.2f' % n_sersic
+    spa = u'%5s' % u'%5.2f' % pa
+    sab = u'%7s' % u'%7.2f' % ba   # b/a = 1 - e
 
     # Creating GALFIT feed file for simulated galaxy
     galfitfeed = open(randgal + '.feed', 'w')
@@ -106,7 +142,7 @@ def galfeed(output_image, xpix_image, ypix_image, zeropoint, pixelscale, xpix_co
     galfitfeed.write('F) '+dust_image+'         # Pixel mask (ASCII file or FITS file with non-0 values)\n')
     galfitfeed.write('G) none                  # Parameter constraint file (ASCII)\n')
     galfitfeed.write('H) 1 '+str(xpix_image)+' 1 '+str(ypix_image)+'   # Image region to fit (xmin xmax ymin ymax)\n')
-    galfitfeed.write('I) 1089   963             # Size of convolution box (x y)\n')
+    galfitfeed.write('I) '+str(xpix_conv)+'   '+str(ypix_conv)+'             # Size of convolution box (x y)\n')
     galfitfeed.write('J) ' + str(zeropoint) + '       # Magnitude photometric zeropoint\n')
     galfitfeed.write('K) '+str(pixelscale)+' '+str(pixelscale)+'           # Plate scale (dx dy)\n')
     galfitfeed.write('O) regular               # Display type (regular, curses, both)\n')
@@ -171,9 +207,9 @@ def main():
         tpa.extend([rpa])
 
         # Generate galfit feed file and run galfit
-        galfeed(wdir+'simgal/'+galmodel+str(x)+'.fits', xxpix, yypix, zp, pixscl,
-                rxpix, rypix, rmag, rreff, rsersic, rba, rpa, psf_image = psfimage)
-        cmnd1 = galfit + ' ' + randgal + '.feed'
+        galfeed(wdir+'science/'+field+'/'+filt+'/simgal/'+galmodel+str(x)+'.fits', xout, yout, xconv, yconv, zp, pixscl,
+                xout/2, yout/2, rmag, rreff, rsersic, rba, rpa, psf_image=psfimage)
+        cmnd1 = galfit + ' -noskyest ' + randgal + '.feed'
         os.system(cmnd1)
 
         # Print message when each 1/10th of total iterations are complete
@@ -189,11 +225,21 @@ def main():
     t['r_eff'] = treff
     t['n_sersic'] = tsersic
     t['b/a'] = tba
-    t['pos_angle'] = tpa
+    t['PA'] = tpa
 
-    t.write(outfilename, format='ascii.tab')
+    # Format table data
+    t['ID'].format = '%4s'
+    t['xpix'].format = '%8.2f'
+    t['ypix'].format = '%8.2f'
+    t['mag'].format = '%5.2f'
+    t['r_eff'].format = '%4.2f'
+    t['n_sersic'].format = '%5.2f'
+    t['b/a'].format = '%4.2f'
+    t['PA'].format = '%5.2f'
+
+    t.write(wdir+'science/'+field+'/'+filt+'/'+outfilename, format='ascii.tab')
     if verbose:
-        output.write('\n data written to '+outfilename+' \n')
+        output.write('\n data written to science/'+field+'/'+filt+'/'+outfilename+' \n')
 
 
 if __name__ == "__main__":
