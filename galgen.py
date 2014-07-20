@@ -228,7 +228,7 @@ def main():
     t['PA'] = tpa
 
     # Format table data
-    t['ID'].format = '%4s'
+    t['ID'].format = '%4d'
     t['xpix'].format = '%8.2f'
     t['ypix'].format = '%8.2f'
     t['mag'].format = '%5.2f'
