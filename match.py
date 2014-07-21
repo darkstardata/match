@@ -229,8 +229,8 @@ for w in xrange(l):
     t['xpix'] = gxpix
     t['ypix'] = gypix
     t['mag'] = gmag
-    t['reff'] = greff
-    t['nsersic'] = gsersic
+    t['r_eff'] = greff
+    t['n_sersic'] = gsersic
     t['b/a'] = gba
     t['PA'] = gpa
 
@@ -253,8 +253,8 @@ for w in xrange(l):
     t['xpix'].format = '%7.2f'
     t['ypix'].format = '%7.2f'
     t['mag'].format = '%5.2f'
-    t['reff'].format = '%4.2f'
-    t['nsersic'].format = '%5.2f'
+    t['r_eff'].format = '%4.2f'
+    t['n_sersic'].format = '%5.2f'
     t['b/a'].format = '%4.2f'
     t['PA'].format = '%5.2f'
 
