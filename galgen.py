@@ -44,11 +44,6 @@ galmodel = 'galmodel'                                                           
 random = 'random.tab'                                                               # input list of true random numbers
 dustimage = ' '
 
-# Set outfile name, and verbosity
-outfilename = 'galmodel.tab'
-verbose = 1
-output = sys.stdout
-
 # Output postage stamp dimensions
 xout = 300
 yout = 300
@@ -76,11 +71,29 @@ filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
 zeropt = [25.96, 26.25, 25.94333, 26.49113, 26.94]
 pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]
 
+# Instrument selector
+if filters is 'f160w' or filters is 'f125w':
+    inst = 'wfc3'
+
+elif filters is 'f814w' or filters is 'f606w':
+    inst = 'acs'
+
+elif filters is 'f350lp':
+    inst = 'uvis'
+
+else:
+    sys.exit('Error: No Filter Selected!')
+
 field = fields[w]
 filt = filters[z]
 zp = zeropt[z]    # zeropoint magnitude
 pixscl = pixel_scale[z]    # "/pix
 psfimage = wdir+'psf/'+'psf_'+filt+'.fits'
+
+# Set outfile name, and verbosity
+outfilename = 'galmodel_'+field+'_'+filt+'.tab'
+verbose = 1
+output = sys.stdout
 
 xpixels_uds = [30720, 30720, 61440, 61440, 61440]
 ypixels_uds = [12800, 12800, 25600, 25600, 25600]
@@ -189,8 +202,12 @@ def main():
 #   for x in range(8749,9999,1):
 
         r = rand[x]
-        rxpix = round(r[0]*xpix, 2)
-        rypix = round(r[1]*ypix, 2)
+        rxpix = round(r[0]*xpix, 0)
+        rypix = round(r[1]*ypix, 0)
+        if rxpix == 0:
+            rxpix = 1.00
+        if rypix == 0:
+            rypix = 1.00
         rmag = round(r[2]*abs(mag[1]-mag[0])+mag[0], 2)
         rreff = round(r[3]*abs(reff[1]-reff[0])+reff[0], 2)
         rsersic = round(r[5]*abs(sersic[1]-sersic[0])+sersic[0], 2)
@@ -208,7 +225,7 @@ def main():
 
         # Generate galfit feed file and run galfit
         galfeed(wdir+'science/'+field+'/'+filt+'/simgal/'+galmodel+str(x)+'.fits', xout, yout, xconv, yconv, zp, pixscl,
-                xout/2, yout/2, rmag, rreff, rsersic, rba, rpa, psf_image=psfimage)
+                ((xout/2)+1), ((yout/2)+1), rmag, rreff, rsersic, rba, rpa, psf_image=psfimage)
         cmnd1 = galfit + ' -noskyest ' + randgal + '.feed'
         os.system(cmnd1)
 
@@ -228,9 +245,9 @@ def main():
     t['PA'] = tpa
 
     # Format table data
-    t['ID'].format = '%4d'
-    t['xpix'].format = '%8.2f'
-    t['ypix'].format = '%8.2f'
+    t['ID'].format = '%5.f'
+    t['xpix'].format = '%6.f'
+    t['ypix'].format = '%6.f'
     t['mag'].format = '%5.2f'
     t['r_eff'].format = '%4.2f'
     t['n_sersic'].format = '%5.2f'
@@ -241,6 +258,8 @@ def main():
     if verbose:
         output.write('\n data written to science/'+field+'/'+filt+'/'+outfilename+' \n')
 
+    # Exit when finished
+    return
 
 if __name__ == "__main__":
     main()

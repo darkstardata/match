@@ -15,71 +15,169 @@ Runtime ~ 1 hr  5 min
 '''
 import os
 import sys
-import glob                                 # Find files
 import pyfits                               # Open fits files
-
-#Dashboard
-#n = 10 # number of simulated galaxies to create per input image
-zp = 25.9463                                # zeropoint magnitude
-pixres = 2                                  # ~2kpc x ~2kpc postage stamp
-xx = 1089
-yy = 963
+from astropy.table import Table             # Open simulated galaxy data table
 
 
-# Local Subdirectories
-simcomb = 'simcomb/'
-simgalset = 'simgalset/'
+def add_pstamp(input_image, postage_stamp, xloc, yloc):
+    """
+    Adds the image 'postage_stamp' to a blank image (zero array) the same size as the 'input_image'.
+    The postage stamp size is 300pix X 300pix and as a result the psf is centered on x,y = (151,151).
+    Pixel (xcent, ycent) on the 'postage_stamp' is added to pixel (xpos, ypos) in the 'input_image'.
+    The remaining pixels are mapped to the surrounding pixels.
 
-# Prefixes for output files
-galtab = 'galmodel.tab'
-galcomb = 'galcomb'                                   # image with n sim gal added
-galmodel = 'galmodel'                                 # sim galaxy file prefix
-galmodelset = 'galmodelset'
+    Requires: sys, numpy, pyfits
 
-outfilename = 'sexmatch.tab'
-wdir = os.getcwd()+'/'
+    Note: FITS images have x and y inverted so y comes first (i.e. [y][x])
+    """
+    # Find dimensions of 'input_image' and 'postage_stamp'
+    ysize_in = input_image.shape[0]
+    xsize_in = input_image.shape[1]
+    ysize_ps = postage_stamp.shape[0]
+    xsize_ps = postage_stamp.shape[1]
 
-# Set outfile name, number of itertions, and verbosity
-iteration = [1000, 10]
+    # Fix due to image pixels starting at 1 but array indices starting at 0
+    ypos = yloc - 1
+    xpos = xloc - 1
 
-# Scan directory for input fits files while excluding program files and alert if no .fits input images are present
-images = glob.glob('*.fits')
-if outfilename in images:
-    images.remove(outfilename)
+    # Define xcent, and ycent by checking if postage stamp size is even or odd number of pixels
+    # in x and y dimensions, exit if even since not sure what that will do yet and don't care
+    if xsize_ps % 2 == 0:
+        xcent = (xsize_ps/2 + 1.0) - 1
+    else:
+        #xcent = (xsize_ps/2 + 0.5) - 1
+        sys.exit(' Error, code not yet ready for postage stamps with odd number of pixels in any dimension!')
+    if ysize_ps % 2 == 0:
+        ycent = (ysize_ps/2 + 1.0) - 1
+    else:
+        #ycent = (ysize_ps/2 + 0.5) - 1
+        sys.exit(' Error, code not yet ready for postage stamps with odd number of pixels in any dimension!')
 
-cut1 = glob.glob(galmodel+'*.fits')
-rem1 = len(cut1)
-for i in xrange(rem1):
-    if cut1[i] in images:
-        images.remove(cut1[i])
+    # Make sure 'postage_stamp' dimensions are smaller then the resize image dimensions
+    if xsize_ps >= xsize_in or ysize_ps >= ysize_in:
+        sys.exit('Error: Postage stamp resizing can only enlarge, ' +
+                 'but postage stamp is larger than resized dimension(s)!')
+    # Make sure xpos and ypos exist inside resized image dimensions
+    if xpos < 0 or xpos > xsize_in-1:
+        sys.exit('Error: X center position is outside bounds of input_image dimensions!')
+    if ypos < 0 or ypos > ysize_in-1:
+        sys.exit('Error: Y center position is outside bounds of input_image dimensions!')
 
-cut2 = glob.glob(galcomb+'*.fits')
-rem2 = len(cut2)
-for i in xrange(rem2):
-    if cut2[i] in images:
-        images.remove(cut2[i])
+    # Define xmin, xmax, ymin, ymax, xr_offset, xl_offset, yb_offset, and yt_offset
+    xr_offset = 0
+    xl_offset = 0
+    yb_offset = 0
+    yt_offset = 0
+    ymin = ypos - ycent
+    ymax = ypos + ycent - 1
+    xmin = xpos - xcent
+    xmax = xpos + xcent - 1
 
-if len(images) == 0:
-    print('No input images. Call with "--help" for help.\n')
-    sys.exit()
-l = len(images)
+    # Check if postage stamp goes outside bounds of image and correct for this.
+    if xmin < 0:
+        xl_offset = -xmin
+        xmin = 0
+
+        if ymin < 0:
+            yb_offset = -ymin
+            ymin = 0
+        elif ymax > ysize_in - 1:
+            yt_offset = ymax - (ysize_in - 1)
+            ymax = ysize_in - 1
+
+    elif xmax > xsize_in - 1:
+        xr_offset = xmax - (xsize_in - 1)
+        xmax = xsize_in - 1
+
+        if ymin < 0:
+            yb_offset = -ymin
+            ymin = 0
+        elif ymax > ysize_in - 1:
+            yt_offset = ymax - (ysize_in - 1)
+            ymax = ysize_in - 1
+
+    else:
+        if ymin < 0:
+            yb_offset = -ymin
+            ymin = 0
+        elif ymax > ysize_in - 1:
+            yt_offset = ymax - (ysize_in - 1)
+            ymax = ysize_in - 1
+
+    ### Add region of postage stamped centered on (xcent, ycent) to
+    ### resized image of zero pixels region centered on (xpos, ypos)
+    input_image[ymin:ymax+1, xmin:xmax+1] += postage_stamp[yb_offset:ysize_ps-yt_offset, xl_offset:xsize_ps-xr_offset]
+
+    return input_image
 
 
-# Loop through science images
-for w in xrange(l):
+def main():
+    #Dashboard
+    wdir = os.getcwd()+'/'
 
-    # Loop through galmodelset images
-    for x in xrange(iteration[0]):
+    # Prefixes for iterated input and output files
+    galcomb = 'galcomb'                                   # image with n sim gal added
+    galmodel = 'galmodel'                                 # sim galaxy file prefix
 
-        # Combine Science image with simulated batch image
-        image = pyfits.open(images[w])[0].data
-        gimages = pyfits.open(simgalset + galmodelset + str(x) + '.fits')[0].data
-        sexinput = image+gimages
+    # Field and Filter selector
+    y = 0       # Field index
+    z = 0       # Filter index
 
-        # Make sure no file exists with the same name before writing
-        cut3 = glob.glob(simcomb + galcomb + '*.fits')
-        if simcomb + galcomb + str(x) + '.fits' in cut3:
-            os.remove(simcomb + galcomb + '_' + str(w) + '_' + str(x) + '.fits')
+    fields = ['uds', 'bootes']
+    filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
 
-        # Write science+simulated image to file
-        pyfits.writeto(simcomb + galcomb + '_' + str(w) + '_' + str(x) + '.fits', sexinput)
+    field = fields[y]
+    filt = filters[z]
+
+    # Local Subdirectories and special input files
+    simcomb = wdir+'science/'+field+'/'+filt+'/simcomb/'
+    simgal = wdir+'science/'+field+'/'+filt+'/simgal/'
+    science = wdir+'science/'+field+'/'+filt+'/'
+
+    galtab = 'galmodel_'+field+'_'+filt+'.tab'
+
+    # Instrument selector
+    if filt is 'f160w' or filters is 'f125w':
+        inst = 'wfc3'
+
+    elif filt is 'f814w' or filters is 'f606w':
+        inst = 'acs'
+
+    elif filt is 'f350lp':
+        inst = 'uvis'
+
+    else:
+        sys.exit('Error: No Filter Selected!')
+
+    # Read and array data from simulated galaxy table (galmodel.tab)
+    gal = Table.read(science + galtab, format='ascii.tab')
+    gxpix = gal[gal.colnames[1]]
+    gypix = gal[gal.colnames[2]]
+
+    # Set iterations and name input image
+    iteration = [5, 2000]                  # [ number of combined images, number of sim galaxies per combined image]
+
+    # Loop through batches of simulated galaxies
+    for w in xrange(iteration[0]):
+
+        # Read in image data and header from science image
+        image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
+        hdu = image[0]
+        data = hdu.data
+        hdr = hdu.header
+
+        # Loop through the individual simulated galaxies
+        for x in xrange(iteration[1]):
+
+            # Combine Science image with simulated batch image
+            gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits')[0].data
+            data = add_pstamp(data, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+
+        # Write science+(simulated images) with original header information to fits file
+        output = pyfits.PrimaryHDU(data=data, header=hdr)
+        output.writeto(simcomb + galcomb + str(w) + '.fits', clobber=True)
+
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
