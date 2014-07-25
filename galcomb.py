@@ -9,13 +9,15 @@ Affiliation: Graduate Student @ UC Riverside
 
 """
 '''
-Combines science images with galmodelset*.fits images and outputs galcomb_*_*.fits for processing with sextractor.
+Combines science images with galmodel*.fits images and outputs galcomb*.fits for processing with sextractor.
+Also outputs an image with just the simulated galaxies that were added in each batch called simgalset*.fits .
 
 Runtime ~ 1 hr  5 min
 '''
 import os
 import sys
 import pyfits                               # Open fits files
+import numpy as np
 from astropy.table import Table             # Open simulated galaxy data table
 
 
@@ -118,6 +120,7 @@ def main():
     # Prefixes for iterated input and output files
     galcomb = 'galcomb'                                   # image with n sim gal added
     galmodel = 'galmodel'                                 # sim galaxy file prefix
+    galmodelset = 'galmodelset'
 
     # Field and Filter selector
     y = 0       # Field index
@@ -130,9 +133,10 @@ def main():
     filt = filters[z]
 
     # Local Subdirectories and special input files
-    simcomb = wdir+'science/'+field+'/'+filt+'/simcomb/'
-    simgal = wdir+'science/'+field+'/'+filt+'/simgal/'
-    science = wdir+'science/'+field+'/'+filt+'/'
+    science = wdir + 'science/' + field + '/' + filt + '/'
+    simcomb = science + 'simcomb/'
+    simgal = science + 'simgal/'
+    simgalset = science + 'simgalset/'
 
     galtab = 'galmodel_'+field+'_'+filt+'.tab'
 
@@ -165,19 +169,28 @@ def main():
         hdu = image[0]
         data = hdu.data
         hdr = hdu.header
+        sky = hdr['SKYVAL']
+        xpix = hdr['NAXIS1']
+        ypix = hdr['NAXIS2']
+        galset = np.zeros((ypix, xpix))
 
         # Loop through the individual simulated galaxies
         for x in xrange(iteration[1]):
 
-            # Combine Science image with simulated batch image
+            # Open simulated galaxy postage stamp, subtract sky, and zero out values less than zero.
+            # Then add sku subtracted simulated galaxy to array of zeros.
             gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits')[0].data
-            data = add_pstamp(data, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+            gimage_roughsky = gimage - sky
+            gimage_skysub = gimage_roughsky.clip(min=0)
+            data = add_pstamp(data, gimage_skysub, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+            galset = add_pstamp(galset, gimage_skysub, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
 
-        # Write science+(simulated images) with original header information to fits file
-        output = pyfits.PrimaryHDU(data=data, header=hdr)
-        output.writeto(simcomb + galcomb + str(w) + '.fits', clobber=True)
+        # Write just simulated galaxy batch to galmodelset*.fits and the simulared + science to galcomb*.fits
+        galset_out = pyfits.PrimaryHDU(data=galset)
+        galset_out.writeto(simgalset + galmodelset + str(w) + '.fits', clobber=True)
+        data_out = pyfits.PrimaryHDU(data=data, header=hdr)
+        data_out.writeto(simcomb + galcomb + str(w) + '.fits', clobber=True)
 
-    sys.exit(0)
 
 if __name__ == "__main__":
     main()
