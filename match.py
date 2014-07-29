@@ -38,7 +38,7 @@ field = fields[y]
 filt = filters[z]
 pixres = pixel_resolution[z]
 
-# Local Subdirectories and special input files
+# Local Subdirectories and special input and output files
 wdir = os.getcwd() + '/'
 science = wdir + 'science/' + field + '/' + filt + '/'
 simcomb = science + 'simcomb/'
