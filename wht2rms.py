@@ -9,14 +9,17 @@ Affiliation: Graduate Student @ UC Riverside
 
 """
 import os
+import sys
 import pyfits                               # Open fits files
 import numpy as np
 
-os.chdir('/Users/andrew/iraf')
+#os.chdir('/Users/andrew/iraf')
+os.chdir('/home/lokiz/Desktop/fits')
+
 
 # Field and Filter selector
 y = 0       # Field index
-z = 1       # Filter index
+z = 2       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -26,7 +29,7 @@ field = fields[y]
 filt = filters[z]
 
 # Multidrizzle parameters
-s = round(output_pixelres[z]/input_pixelres[z] , 2)       # scale
+s = round(output_pixelres[z]/input_pixelres[z], 2)       # scale
 p = 0.8                                         # pixfrac
 
 # Weight to RMS conversion scale factor F_A (Appendix A in "Sextractor for Dummies"), RMS = F_A/(sqrt(Weight))
@@ -54,8 +57,14 @@ else:
 # Scan directory for weight maps
 image = 'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_wht.fits'
 
-weight = pyfits.open(image)[0]
+weight = pyfits.open(image, memmap=True)[0]
 weight_image = weight.data
 hdr = weight.header
-rms_image = pyfits.PrimaryHDU(F_A/np.sqrt(weight_image),header=hdr)
+
+weight_sqrt = np.sqrt(weight_image)
+# Prevents divide by zero
+weight_sqrt[weight_sqrt == 0] = 10**(-1*31.0)
+rms = np.float32(F_A/weight_sqrt)
+print rms[0][0]
+rms_image = pyfits.PrimaryHDU(rms, header=hdr)
 rms_image.writeto('hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_rms.fits', clobber=True)
