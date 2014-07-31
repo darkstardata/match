@@ -7,3 +7,5 @@ sexmatch/
 psf/
 science/
 *.fits
+.idea/workspace.xml
+match.iws
