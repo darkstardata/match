@@ -180,10 +180,9 @@ def main():
             # Open simulated galaxy postage stamp, subtract sky, and zero out values less than zero.
             # Then add sku subtracted simulated galaxy to array of zeros.
             gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits')[0].data
-            gimage_roughsky = gimage - sky
-            gimage_skysub = gimage_roughsky.clip(min=0)
-            data = add_pstamp(data, gimage_skysub, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
-            galset = add_pstamp(galset, gimage_skysub, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+
+            data = add_pstamp(data, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+            galset = add_pstamp(galset, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
 
         # Write just simulated galaxy batch to galmodelset*.fits and the simulared + science to galcomb*.fits
         galset_out = pyfits.PrimaryHDU(data=galset)

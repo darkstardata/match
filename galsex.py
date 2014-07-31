@@ -117,10 +117,11 @@ for x in xrange(iteration[0]):
     cmnd2 += ' -GAIN ' + str(ccdgain * exptime)
     cmnd2 += ' -MAG_ZEROPOINT ' + str(zp)
     cmnd2 += ' -SEEING_FWHM ' + str(psf)
-    cmnd2 += ' -WEIGHT_TYPE ' + weight_type +',NONE' # if problems w/NONE change to BACKGROUND and uncomment last 2 line
-    cmnd2 += ' -WEIGHT_IMAGE ' + weight_image
-    #cmnd2 += ' -BACK_TYPE MANUAL'
-    #cmnd2 += ' -BACK_VALUE 0.0'
+    cmnd2 += ' -WEIGHT_TYPE ' + weight_type +',NONE'
+    cmnd2 += ' -WEIGHT_IMAGE ' + weight_image +','+ weight_image
+    cmnd2 += ' -WEIGHT_GAIN N,N'
+    cmnd2 += ' -BACK_TYPE MANUAL,MANUAL'
+    cmnd2 += ' -BACK_VALUE 0.0,0.0'
     os.system(cmnd2)
 
     if verbose:
