@@ -25,7 +25,7 @@ as well as a catalog file of the simulated galaxies properties which include
 Assumed Cosmology: h = 0.71, Omega_M = 0.27, Omega_vac = 0.73, z = 1.9.
 (for determining proper range for effective radii in pixels using pixel scale and cosmology)
 
-Runtime ~ 14 hr
+Runtime ~ 2.5 hr
 """
 
 import os
@@ -64,31 +64,33 @@ sersic = [0.01, 12.5]
 
 # Field and Filter selector
 w = 0       # Field index
-z = 0       # Filter index
+z = 1       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
 zeropt = [25.96, 26.25, 25.94333, 26.49113, 26.94]
 pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]
 
-# Instrument selector
-if filters is 'f160w' or filters is 'f125w':
-    inst = 'wfc3'
 
-elif filters is 'f814w' or filters is 'f606w':
-    inst = 'acs'
-
-elif filters is 'f350lp':
-    inst = 'uvis'
-
-else:
-    sys.exit('Error: No Filter Selected!')
 
 field = fields[w]
 filt = filters[z]
 zp = zeropt[z]    # zeropoint magnitude
 pixscl = pixel_scale[z]    # "/pix
 psfimage = wdir+'psf/'+'psf_'+filt+'.fits'
+
+# Instrument selector
+if filt is 'f160w' or filt is 'f125w':
+    inst = 'wfc3'
+
+elif filt is 'f814w' or filt is 'f606w':
+    inst = 'acs'
+
+elif filt is 'f350lp':
+    inst = 'uvis'
+
+else:
+    sys.exit('Error: No Filter Selected!')
 
 # Set outfile name, and verbosity
 outfilename = 'galmodel_'+field+'_'+filt+'.tab'

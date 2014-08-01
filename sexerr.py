@@ -29,24 +29,108 @@ import argparse
 import numpy as np
 from astropy.table import Table
 
-parser = argparse.ArgumentParser(description="Characterize sextractor errors for a particular "
-                                             "astronomical fits image given the image and it's"
-                                             " weight map.")
-parser.add_argument('image', metavar='Input Image', type=str, nargs='+',
-                   help='input image')
-parser.add_argument('--sum', dest='accumulate', action='store_const',
-                   const=sum, default=max,
-                   help='sum the integers (default: find the max)')
 
-parser.add_argument('--gen', action='store_true')
-parser.add_argument('--comb', action='store_true')
-parser.add_argument('--sex', action='store_true')
-parser.add_argument('--match', action='store_true')
-parser.add_argument('--plot', action='store_true')
-parser.add_argument('--verbose', '-v', action='count')
+image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
+hdu = image[0]
+data = hdu.data
+hdr = hdu.headergaltab
+ccdgain = hdr['CCDGAIN']
+exptime = hdr['EXPTIME']
+inst = hdr['INSTRUME']
+filt = hdr['FILTER'].trim()
+xpix = hdr['NAXIS1']
+ypix = hdr['NAXIS2']
 
-args = parser.parse_args()
 
+
+
+
+
+
+# SExtractor and Galfit directories
+# galfit='/home/lokiz/bin/galfit'                                                   # Linux location
+galfit = '/usr/local/bin/galfit'                                                    # Mac location
+sexdir = '/opt/local/bin/'                                                          # sextractor dir
+
+
+# SExtractor config files and options
+defaultsex = 'default.sex'
+defaultsim = 'default.sex'
+weight_type = 'MAP_RMS'
+weight_image = science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_rms.fits'
+
+#
+randgal = 'randgal'                                                                 # galfit config file prefix
+random = 'random.tab'                                                               # input list of true random numbers
+dustimage = ' '                                                                     # Bad pixel mask for galfit
+
+
+# Prefixes for iterated input and output files
+outfile = 'sexmatch'
+galcomb = 'galcomb'                                   # image with n sim gal added
+galmodel = 'galmodel'                                 # sim galaxy file prefix
+galmodelset = 'galmodelset'
+sim = 'sim'
+sex = 'sex'
+
+# Local Subdirectories and special input and output files
+wdir = os.getcwd() + '/'
+science = wdir + 'science/' + field + '/' + filt + '/'
+simcomb = science + 'simcomb/'
+simgal = science + 'simgal/'
+simgalset = science + 'simgalset/'
+simcat = science + 'simcat/'
+sexcat = science + 'sexcat/'
+sexmatch = science + 'sexmatch/'
+sexconfig = science + 'sexconfig/'
+
+
+
+# Galgen.py
+
+### Galfit parameters ###
+
+
+
+fields = ['uds', 'bootes']
+filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
+zeropoint = [25.96, 26.25, 25.94333, 26.49113, 26.94]
+psf_fwhm = [0.18, 0.12, 0.09, 0.08, 0.08]              # PSF FWHM in units of arcseconds
+pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]
+
+field = fields[y]
+filt = filters[z]
+zp = zeropoint[z]
+psf = psf_fwhm[z]
+pixscl = pixel_scale[z]
+
+
+psfimage = wdir+'psf/'+'psf_'+filt+'.fits'
+
+
+# Set outfile name, and verbosity
+xpixels_uds = [30720, 30720, 61440, 61440, 61440]
+ypixels_uds = [12800, 12800, 25600, 25600, 25600]
+
+xpixels_bootes = 1089
+ypixels_bootes = 963
+
+xxpix = u'%7s' % xpix
+yypix = u'%7s' % ypix
+
+
+
+# Read in sim gal data catalog
+galtab = 'galmodel_'+field+'_'+filt+'.tab'
+gal = Table.read(science + galtab, format='ascii.tab')
+gid = gal[gal.colnames[0]]
+gxpix = gal[gal.colnames[1]]
+gypix = gal[gal.colnames[2]]
+gmag = gal[gal.colnames[3]]
+greff = gal[gal.colnames[4]]
+gsersic = gal[gal.colnames[5]]
+gba = gal[gal.colnames[6]]
+gpa = gal[gal.colnames[7]]
 
 
 # Generate galfit feed file
@@ -193,6 +277,14 @@ def add_pstamp(input_image, postage_stamp, xloc, yloc):
 # Generate simulated galaxies
 def galgen():
 
+    # Output postage stamp dimensions
+    xout = 300
+    yout = 300
+
+    # Convolution box dimensions
+    xconv = 300
+    yconv = 300
+
     # Create lists to store iterated data & sextractor detection data
     txpix = []
     typix = []
@@ -263,73 +355,20 @@ def galgen():
     t['b/a'].format = '%4.2f'
     t['PA'].format = '%5.2f'
 
-    t.write(wdir+'science/'+field+'/'+filt+'/'+outfilename, format='ascii.tab')
+    t.write(wdir+'science/'+field+'/'+filt+'/'+galtab, format='ascii.tab')
     if verbose:
-        output.write('\n data written to science/'+field+'/'+filt+'/'+outfilename+' \n')
+        output.write('\n data written to science/'+field+'/'+filt+'/'+galtab+' \n')
 
     # Exit when finished
     return
 
 
-def galcomb():
-    #Dashboard
-    wdir = os.getcwd()+'/'
-
-    # Prefixes for iterated input and output files
-    galcomb = 'galcomb'                                   # image with n sim gal added
-    galmodel = 'galmodel'                                 # sim galaxy file prefix
-    galmodelset = 'galmodelset'
-
-    # Field and Filter selector
-    y = 0       # Field index
-    z = 0       # Filter index
-
-    fields = ['uds', 'bootes']
-    filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
-
-    field = fields[y]
-    filt = filters[z]
-
-    # Local Subdirectories and special input files
-    science = wdir + 'science/' + field + '/' + filt + '/'
-    simcomb = science + 'simcomb/'
-    simgal = science + 'simgal/'
-    simgalset = science + 'simgalset/'
-
-    galtab = 'galmodel_'+field+'_'+filt+'.tab'
-
-    # Instrument selector
-    if filt is 'f160w' or filters is 'f125w':
-        inst = 'wfc3'
-
-    elif filt is 'f814w' or filters is 'f606w':
-        inst = 'acs'
-
-    elif filt is 'f350lp':
-        inst = 'uvis'
-
-    else:
-        sys.exit('Error: No Filter Selected!')
-
-    # Read and array data from simulated galaxy table (galmodel.tab)
-    gal = Table.read(science + galtab, format='ascii.tab')
-    gxpix = gal[gal.colnames[1]]
-    gypix = gal[gal.colnames[2]]
-
-    # Set iterations and name input image
-    iteration = [5, 2000]                  # [ number of combined images, number of sim galaxies per combined image]
-
+def galcomb(real_image):
     # Loop through batches of simulated galaxies
     for w in xrange(iteration[0]):
 
         # Read in image data and header from science image
-        image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
-        hdu = image[0]
-        data = hdu.data
-        hdr = hdu.header
-        sky = hdr['SKYVAL']
-        xpix = hdr['NAXIS1']
-        ypix = hdr['NAXIS2']
+        data = real_image
         galset = np.zeros((ypix, xpix))
 
         # Loop through the individual simulated galaxies
@@ -350,79 +389,8 @@ def galcomb():
 
 
 
-def galsex():
-    #Dashboard
-    iteration = [5, 2000]
-    output = sys.stdout
-    verbose = 1
-    sexdir = '/opt/local/bin/'                  # sextractor dir
-
-    # Prefixes for iterated input and output files
-    galcomb = 'galcomb'                                   # image with n sim gal added
-    galmodel = 'galmodel'                                 # sim galaxy file prefix
-    galmodelset = 'galmodelset'
-    sim = 'sim'
-    sex = 'sex'
-
-    # Field and Filter selector
-    y = 0       # Field index
-    z = 0       # Filter index
-
-    fields = ['uds', 'bootes']
-    filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
-    zeropoint = [25.96, 26.25, 25.94333, 26.49113, 26.94]
-    psf_fwhm = [0.18, 0.12, 0.09, 0.08, 0.08]              # PSF FWHM in units of arcseconds
-    field = fields[y]
-    filt = filters[z]
-    zp = zeropoint[z]
-    psf = psf_fwhm[z]
-
-
-    # Local Subdirectories and special input files
-    wdir = os.getcwd()+'/'
-    science = wdir+'science/'+field+'/'+filt+'/'
-    simcomb = science+'simcomb/'
-    simgal = science+'simgal/'
-    sexconfig = science+'sexconfig/'
-    simgalset = science+'simgalset/'
-    simcat = science+'simcat/'
-    sexcat = science+'sexcat/'
-
-    galtab = 'galmodel_'+field+'_'+filt+'.tab'
-
-
-    # Instrument selector
-    if filt is 'f160w' or filters is 'f125w':
-        inst = 'wfc3'
-
-    elif filt is 'f814w' or filters is 'f606w':
-        inst = 'acs'
-
-    elif filt is 'f350lp':
-        inst = 'uvis'
-
-    else:
-        sys.exit('Error: No Filter Selected!')
-
-
-    # Sextractor config file parameters
-    defaultsex = 'default.sex'
-    defaultsim = 'default.sex'
-    weight_type = 'MAP_RMS'
-    weight_image = science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_rms.fits'
-
-
-    # Scan directory for input fits files while excluding program files and alert if no .fits input images are present
-    # Read in image data and header from science image
-    image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
-    hdu = image[0]
-    data = hdu.data
-    hdr = hdu.header
-    ccdgain = hdr['CCDGAIN']
-    exptime = hdr['EXPTIME']
-
-
-    for x in xrange(iteration[0]):
+def galsex(iteration, simcomb, galmodelset):
+    for x in xrange(iteration):
 
         # Run sextractor in single image mode on new image (galcomb*.fits)
         cmnd = sexdir + 'sex ' + simcomb + galcomb + str(x) + '.fits'
@@ -460,54 +428,6 @@ def galsex():
 
 
 def match():
-    #Dashboard
-    iteration = [5, 2000]
-    output = sys.stdout
-    verbose = 1
-    sexdir = '/opt/local/bin/'                  # sextractor dir
-
-    # Field and Filter selector
-    y = 0       # Field index
-    z = 0       # Filter index
-
-    fields = ['uds', 'bootes']
-    filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
-    pixel_resolution = [0.06, 0.06, 0.03, 0.03, 0.03]
-    field = fields[y]
-    filt = filters[z]
-    pixres = pixel_resolution[z]
-
-    # Local Subdirectories and special input and output files
-    wdir = os.getcwd() + '/'
-    science = wdir + 'science/' + field + '/' + filt + '/'
-    simcomb = science + 'simcomb/'
-    simgal = science + 'simgal/'
-    simgalset = science + 'simgalset/'
-    simcat = science + 'simcat/'
-    sexcat = science + 'sexcat/'
-    sexmatch = science + 'sexmatch/'
-    sexconfig = science + 'sexconfig/'
-
-    outfile = 'sexmatch'
-    galmodel = 'galmodel'                                 # sim galaxy file prefix
-    sim = 'sim'
-    sex = 'sex'
-
-    # Read in sim gal data catalog
-    galtab = 'galmodel_' + field + '_' + filt + '.tab'
-    gal = Table.read(science + galtab, format='ascii.tab')
-
-    # Array for sim gal data
-    gid = gal[gal.colnames[0]]
-    gxpix = gal[gal.colnames[1]]
-    gypix = gal[gal.colnames[2]]
-    gmag = gal[gal.colnames[3]]
-    greff = gal[gal.colnames[4]]
-    gsersic = gal[gal.colnames[5]]
-    gba = gal[gal.colnames[6]]
-    gpa = gal[gal.colnames[7]]
-
-
     # First Summing array for sextractor gal data
     sxpix = []
     sypix = []
@@ -694,3 +614,74 @@ def match():
 
     if verbose:
         output.write('\n data written to all' + outfile + '.tab \n')
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Characterize sextractor errors for a particular "
+                                                 "astronomical fits image given the image and it's"
+                                                 " weight map.")
+    parser.add_argument('image', metavar='Input Image', type=str, nargs='+',
+                       help='input image')
+    parser.add_argument('--sum', dest='accumulate', action='store_const',
+                       const=sum, default=max,
+                       help='sum the integers (default: find the max)')
+
+    parser.add_argument('--gen', action='store_true')
+    parser.add_argument('--comb', action='store_true')
+    parser.add_argument('--sex', action='store_true')
+    parser.add_argument('--match', action='store_true')
+    parser.add_argument('--plot', action='store_true')
+    parser.add_argument('--verbose', '-v', action='count')
+
+    args = parser.parse_args()
+
+    iteration = [5, 2000]
+    output = sys.stdout
+    verbose = 1
+
+
+    # Parameter ranges
+    iteration = 10000
+    #reff = [0.28, 2.39]                                     # Bootes fields 0.3 -> 2.6 kpc @ z~1.9
+    reff = [0.59, 5.10]                                     # UDS WFC3/IR fields 0.3 -> 2.6 kpc @ z~1.9
+    #reff = [1.15, 10.20]                                    # UDS WFC/ACS fields 0.3 -> 2.6 kpc @ z~1.9
+    ellipt = [0.0, 0.9]
+    mag = [18.0, 28.0]
+    sersic = [0.01, 12.5]
+
+
+    # Prevent code breaks
+    if isinstance(iteration, int) is False:
+        sys.exit('Interations must be an integer value')
+    if iteration < 1:
+        sys.exit('Minimum interations must be equal to or greater than one!')
+    if reff[0] <= 0:
+        sys.exit('Minimum effective radius must be greater than zero!')
+    if ellipt[0] < 0:
+        sys.exit('Minimum ellipticity must be equal to or greater than zero!')
+    if ellipt[1] >= 1:
+        sys.exit('Maximum ellipticity must be less than one!')
+    if sersic[0] <= 0:
+        sys.exit('Minimum sersic index must be greater than zero!')
+
+
+
+    if gen == True:
+
+
+    if comb == True:
+        galcom(data)
+    if sex == True:
+        galsex(iteration[0], ,  )
+
+    if match == True:
+
+    return
+
+
+
+
+if __name__ == "__main__":
+    main()
+
+

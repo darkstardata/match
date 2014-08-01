@@ -124,7 +124,7 @@ def main():
 
     # Field and Filter selector
     y = 0       # Field index
-    z = 0       # Filter index
+    z = 1       # Filter index
 
     fields = ['uds', 'bootes']
     filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -141,10 +141,10 @@ def main():
     galtab = 'galmodel_'+field+'_'+filt+'.tab'
 
     # Instrument selector
-    if filt is 'f160w' or filters is 'f125w':
+    if filt is 'f160w' or filt is 'f125w':
         inst = 'wfc3'
 
-    elif filt is 'f814w' or filters is 'f606w':
+    elif filt is 'f814w' or filt is 'f606w':
         inst = 'acs'
 
     elif filt is 'f350lp':

@@ -19,7 +19,7 @@ os.chdir('/Users/andrew/iraf')
 
 # Field and Filter selector
 y = 0       # Field index
-z = 0       # Filter index
+z = 1       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
