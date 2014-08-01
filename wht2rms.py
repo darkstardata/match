@@ -55,7 +55,7 @@ else:
 
 
 # Scan directory for weight maps
-image = 'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_wht.fits'
+ima = 'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_wht.fits'
 
 weight = pyfits.open(image, memmap=True)[0]
 weight_image = weight.data
