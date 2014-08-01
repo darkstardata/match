@@ -35,16 +35,18 @@ sex = 'sex'
 
 # Field and Filter selector
 y = 0       # Field index
-z = 1       # Filter index
+z = 2       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
 zeropoint = [25.96, 26.25, 25.94333, 26.49113, 26.94]
 psf_fwhm = [0.18, 0.12, 0.09, 0.08, 0.08]              # PSF FWHM in units of arcseconds
+gains = [8250, 4750, 11400, 5600, 0]
 field = fields[y]
 filt = filters[z]
 zp = zeropoint[z]
 psf = psf_fwhm[z]
+gain = gains[z]
 
 
 # Local Subdirectories and special input files
@@ -87,8 +89,7 @@ image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1
 hdu = image[0]
 data = hdu.data
 hdr = hdu.header
-ccdgain = hdr['CCDGAIN']
-exptime = hdr['EXPTIME']
+
 
 
 for x in xrange(iteration[0]):
@@ -97,7 +98,7 @@ for x in xrange(iteration[0]):
     cmnd = sexdir + 'sex ' + simcomb + galcomb + str(x) + '.fits'
     cmnd += ' -c ' + sexconfig + defaultsex
     cmnd += ' -catalog_name ' + sexcat + sex + str(x) + '.cat'
-    cmnd += ' -GAIN ' + str(ccdgain * exptime)
+    cmnd += ' -GAIN ' + str(gain)
     cmnd += ' -MAG_ZEROPOINT ' + str(zp)
     cmnd += ' -SEEING_FWHM ' + str(psf)
     cmnd += ' -WEIGHT_TYPE ' + weight_type
@@ -114,7 +115,7 @@ for x in xrange(iteration[0]):
     cmnd2 += simgalset + galmodelset + str(x) + '.fits'
     cmnd2 += ' -c ' + sexconfig + defaultsex
     cmnd2 += ' -catalog_name ' + simcat + sim + str(x) + '.cat'
-    cmnd2 += ' -GAIN ' + str(ccdgain * exptime)
+    cmnd2 += ' -GAIN ' + str(gain)
     cmnd2 += ' -MAG_ZEROPOINT ' + str(zp)
     cmnd2 += ' -SEEING_FWHM ' + str(psf)
     cmnd2 += ' -WEIGHT_TYPE ' + weight_type +',NONE'

@@ -124,7 +124,7 @@ def main():
 
     # Field and Filter selector
     y = 0       # Field index
-    z = 1       # Filter index
+    z = 2       # Filter index
 
     fields = ['uds', 'bootes']
     filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -169,7 +169,6 @@ def main():
         hdu = image[0]
         data = hdu.data
         hdr = hdu.header
-        sky = hdr['SKYVAL']
         xpix = hdr['NAXIS1']
         ypix = hdr['NAXIS2']
         galset = np.zeros((ypix, xpix))

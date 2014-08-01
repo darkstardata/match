@@ -26,7 +26,7 @@ wdir = os.getcwd()+'/'
 
 # Field and Filter selector
 x = 0       # Field index
-y = 0       # Filter index
+y = 1       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -132,7 +132,7 @@ d = pixdia
 R = (d-1)/2
 
 # y axis comes first in fits images the elements of segm
-segm = pyfits.open(science+'segm/segm_f160w.fits')[0].data
+segm = pyfits.open(science+'segm/segm_'+filt+'.fits')[0].data
 segdet = np.zeros(xpix.size)
 for z in xrange(xpix.size):
     xcen = round(xpix[z])
@@ -231,5 +231,5 @@ ax2.tick_params(
 
 # print length(ucm)
 print len(final)
-plt.show()
+#plt.show()
 plt.savefig('magiso', dpi=120)

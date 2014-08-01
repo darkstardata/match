@@ -64,7 +64,7 @@ sersic = [0.01, 12.5]
 
 # Field and Filter selector
 w = 0       # Field index
-z = 1       # Filter index
+z = 3       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -114,8 +114,8 @@ elif field is 'bootes':
 else:
     sys.exit('Error: No Field Selected!')
 
-xxpix = u'%7s' % xpix
-yypix = u'%7s' % ypix
+xxpix = u'%9s' % xpix
+yypix = u'%9s' % ypix
 
 
 # Prevent code breaks
@@ -138,8 +138,8 @@ def galfeed(output_image, xpix_image, ypix_image, xpix_conv, ypix_conv, zeropoin
             magnitude, radeff, n_sersic, ba, pa, psf_image='', dust_image=''):
 
     # Generate string versions for GALFIT config file. Rounds all parameters to 2 decimal places
-    sxpix = u'%7s' % u'%7.2f' % xpix_coord
-    sypix = u'%7s' % u'%7.2f' % ypix_coord
+    sxpix = u'%9s' % u'%9.2f' % xpix_coord
+    sypix = u'%9s' % u'%9.2f' % ypix_coord
     smag = u'%5s' % u'%5.2f' % magnitude
     sreff = u'%8s' % u'%3.2f' % radeff
     ssersic = u'%5s' % u'%5.2f' % n_sersic
@@ -248,8 +248,8 @@ def main():
 
     # Format table data
     t['ID'].format = '%5.f'
-    t['xpix'].format = '%6.f'
-    t['ypix'].format = '%6.f'
+    t['xpix'].format = '%9.f'
+    t['ypix'].format = '%9.f'
     t['mag'].format = '%5.2f'
     t['r_eff'].format = '%4.2f'
     t['n_sersic'].format = '%5.2f'

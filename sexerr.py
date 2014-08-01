@@ -29,32 +29,14 @@ import argparse
 import numpy as np
 from astropy.table import Table
 
-
-image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
-hdu = image[0]
-data = hdu.data
-hdr = hdu.headergaltab
-ccdgain = hdr['CCDGAIN']
-exptime = hdr['EXPTIME']
-inst = hdr['INSTRUME']
-filt = hdr['FILTER'].trim()
-xpix = hdr['NAXIS1']
-ypix = hdr['NAXIS2']
-
-
-
-
-
-
-
 # SExtractor and Galfit directories
-# galfit='/home/lokiz/bin/galfit'                                                   # Linux location
-galfit = '/usr/local/bin/galfit'                                                    # Mac location
-sexdir = '/opt/local/bin/'                                                          # sextractor dir
+# galfitdir='/home/lokiz/bin'                                                   # Linux location
+galfitdir = '/usr/local/bin'                                                    # Mac location
+sexdir = '/opt/local/bin'                                                          # sextractor dir
 
 
 # SExtractor config files and options
-defaultsex = 'default.sex'
+defaultsex = 'default_'+filt+'.sex'
 defaultsim = 'default.sex'
 weight_type = 'MAP_RMS'
 weight_image = science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_rms.fits'
@@ -84,41 +66,22 @@ sexcat = science + 'sexcat/'
 sexmatch = science + 'sexmatch/'
 sexconfig = science + 'sexconfig/'
 
-
-
 # Galgen.py
 
 ### Galfit parameters ###
 
-
-
 fields = ['uds', 'bootes']
-filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
-zeropoint = [25.96, 26.25, 25.94333, 26.49113, 26.94]
+zeropoints = [25.96, 26.25, 25.94333, 26.49113, 26.94]  # Zeropoint in units of AB magnitude
 psf_fwhm = [0.18, 0.12, 0.09, 0.08, 0.08]              # PSF FWHM in units of arcseconds
-pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]
-
+pixel_scale = [0.06, 0.06, 0.03, 0.03, 0.03]           # Pixel scale in units arcsec/pixel
+gain[8250, 4750, 11400, 5600, 434]
 field = fields[y]
 filt = filters[z]
-zp = zeropoint[z]
+zp = zeropoints[z]
 psf = psf_fwhm[z]
 pixscl = pixel_scale[z]
 
-
 psfimage = wdir+'psf/'+'psf_'+filt+'.fits'
-
-
-# Set outfile name, and verbosity
-xpixels_uds = [30720, 30720, 61440, 61440, 61440]
-ypixels_uds = [12800, 12800, 25600, 25600, 25600]
-
-xpixels_bootes = 1089
-ypixels_bootes = 963
-
-xxpix = u'%7s' % xpix
-yypix = u'%7s' % ypix
-
-
 
 # Read in sim gal data catalog
 galtab = 'galmodel_'+field+'_'+filt+'.tab'
@@ -327,7 +290,7 @@ def galgen():
         # Generate galfit feed file and run galfit
         galfeed(wdir+'science/'+field+'/'+filt+'/simgal/'+galmodel+str(x)+'.fits', xout, yout, xconv, yconv, zp, pixscl,
                 ((xout/2)+1), ((yout/2)+1), rmag, rreff, rsersic, rba, rpa, psf_image=psfimage)
-        cmnd1 = galfit + ' -noskyest ' + randgal + '.feed'
+        cmnd1 = galfitdir + '/galfit -noskyest ' + randgal + '.feed'
         os.system(cmnd1)
 
         # Print message when each 1/10th of total iterations are complete
@@ -347,8 +310,8 @@ def galgen():
 
     # Format table data
     t['ID'].format = '%5.f'
-    t['xpix'].format = '%6.f'
-    t['ypix'].format = '%6.f'
+    t['xpix'].format = '%'+str(len(xpix))+'.f'
+    t['ypix'].format = '%'+str(len(ypix))+'.f'
     t['mag'].format = '%5.2f'
     t['r_eff'].format = '%4.2f'
     t['n_sersic'].format = '%5.2f'
@@ -393,7 +356,7 @@ def galsex(iteration, simcomb, galmodelset):
     for x in xrange(iteration):
 
         # Run sextractor in single image mode on new image (galcomb*.fits)
-        cmnd = sexdir + 'sex ' + simcomb + galcomb + str(x) + '.fits'
+        cmnd = sexdir + '/sex ' + simcomb + galcomb + str(x) + '.fits'
         cmnd += ' -c ' + sexconfig + defaultsex
         cmnd += ' -catalog_name ' + sexcat + sex + str(x) + '.cat'
         cmnd += ' -GAIN ' + str(ccdgain * exptime)
@@ -409,7 +372,7 @@ def galsex(iteration, simcomb, galmodelset):
         # Run sextractor in dual image mode:
         #   Find mag of galmodelset*.fits image (used for aperture correction)
         #   using the same apertures from the corresponding galcomb*.fits image
-        cmnd2 = sexdir + 'sex ' + simcomb + galcomb + str(x) + '.fits,'
+        cmnd2 = sexdir + '/sex ' + simcomb + galcomb + str(x) + '.fits,'
         cmnd2 += simgalset + galmodelset + str(x) + '.fits'
         cmnd2 += ' -c ' + sexconfig + defaultsex
         cmnd2 += ' -catalog_name ' + simcat + sim + str(x) + '.cat'
@@ -664,6 +627,35 @@ def main():
     if sersic[0] <= 0:
         sys.exit('Minimum sersic index must be greater than zero!')
 
+    image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
+    hdu = image[0]
+    data = hdu.data
+    hdr = hdu.headergaltab
+    ccdgain = hdr['CCDGAIN']
+    exptime = hdr['EXPTIME']
+    inst = hdr['INSTRUME']
+    xpix = hdr['NAXIS1']
+    ypix = hdr['NAXIS2']
+
+    xxpix = u'%7s' % xpix
+    yypix = u'%7s' % ypix
+
+
+
+
+
+
+
+
+
+
+    # Find filter in header
+    if inst is 'wfc3':
+        filt = hdr['FILTER'].trim()
+    elif inst is 'acs':
+        filt = hdr['FILTER2'].trim()
+    else:
+        sys.exit('Unrecognized instrument. Only designed to accept "wfc3" and "acs"!')
 
 
     if gen == True:
