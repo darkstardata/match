@@ -1,15 +1,15 @@
 # IMAGE PARAMETERS
 A) # Input Data image (FITS file)
-B) /Users/andrew/git/match/simgal/galmodel9999.fits      # Name for the output image
+B) /Users/andrew/git/match/science/uds/f606w/simgal/galmodel11.fits      # Name for the output image
 C) none                  # Noise image name (made from data if blank or "none")
-D)           # Input PSF image and (optional) diffusion kernel
+D) /Users/andrew/git/match/psf/psf_f606w.fits          # Input PSF image and (optional) diffusion kernel
 E) 1                     # PSF oversampling factor relative to data
 F)          # Pixel mask (ASCII file or FITS file with non-0 values)
 G) none                  # Parameter constraint file (ASCII)
-H) 1    1089 1     963   # Image region to fit (xmin xmax ymin ymax)
-I) 120   120             # Size of convolution box (x y)
-J) 25.9463       # Magnitude photometric zeropoint
-K) 0.128 0.128           # Plate scale (dx dy)
+H) 1 300 1 300   # Image region to fit (xmin xmax ymin ymax)
+I) 300   300             # Size of convolution box (x y)
+J) 26.49113       # Magnitude photometric zeropoint
+K) 0.03 0.03           # Plate scale (dx dy)
 O) regular               # Display type (regular, curses, both)
 P) 0                     # Create ouput only? (1=yes; 0=optimize)
 S) 0                     # Modify/create objects interactively?
@@ -18,14 +18,14 @@ S) 0                     # Modify/create objects interactively?
 # Sersic function
 
  0) sersic               # Object type
- 1) 1070.61  317.19  0 0 # position x, y       [pixels]
- 3)   24.03          0   # total magnitude
- 4)    1.46          0   # R_e                 [pixels]
- 5)    12.15          0   # Sersic exponent (deVauc=4, expdisk=1)
+ 1)        151.00        151.00  0 0 # position x, y       [pixels]
+ 3) 19.07          0   # total magnitude
+ 4)    3.46          0   # R_e                 [pixels]
+ 5)  7.35          0   # Sersic exponent (deVauc=4, expdisk=1)
  6)                  0   # --------
  7)                  0   # --------
  8)                  0   # --------
- 9)    0.51          0   # axis ratio (b/a)
-10)   27.61          0   # position angle (PA)  [Degrees: Up=0, Left=90]
+ 9)      0.28          0   # axis ratio (b/a)
+10)  1.43          0   # position angle (PA)  [Degrees: Up=0, Left=90]
  Z)                  0   # output image (see above)
 

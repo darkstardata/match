@@ -29,7 +29,7 @@ sexdir = '/opt/local/bin/'                  # sextractor dir
 
 # Field and Filter selector
 y = 0       # Field index
-z = 0       # Filter index
+z = 1       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -38,7 +38,7 @@ field = fields[y]
 filt = filters[z]
 pixres = pixel_resolution[z]
 
-# Local Subdirectories and special input files
+# Local Subdirectories and special input and output files
 wdir = os.getcwd() + '/'
 science = wdir + 'science/' + field + '/' + filt + '/'
 simcomb = science + 'simcomb/'
@@ -218,6 +218,7 @@ t['sex_xpix'] = list(sxpix)
 t['sex_ypix'] = list(sypix)
 t['sex_mag'] = list(smag)
 t['sex_mag-err'] = list(smagerr)
+
 t['sim_mag'] = list(ssimmag)
 #t['sim_mag-err'] = list(ssimmagerr)
 t['sex_reff'] = list(sreff)
@@ -250,6 +251,8 @@ t['sex_PA'].format = '%5.2f'
 
 t['isoarea'].format = '%3d'
 t['sflags'].format = '%3d'
+
+
 
 t.write(science + 'all' + outfile + '.tab', format='ascii.tab')
 
