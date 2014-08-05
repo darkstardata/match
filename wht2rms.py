@@ -13,13 +13,13 @@ import sys
 import pyfits                               # Open fits files
 import numpy as np
 
-os.chdir('/Users/andrew/iraf')
-#os.chdir('/home/lokiz/Desktop/fits')
+#os.chdir('/Users/andrew/iraf')
+os.chdir('/home/lokiz/Desktop/fits')
 
 
 # Field and Filter selector
 y = 0       # Field index
-z = 1       # Filter index
+z = 2       # Filter index
 
 fields = ['uds', 'bootes']
 filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -27,6 +27,10 @@ output_pixelres = [0.06, 0.06, 0.03, 0.03, 0.03]
 input_pixelres = [0.13, 0.13, 0.05, 0.05, 0.04]
 field = fields[y]
 filt = filters[z]
+
+# Multidrizzle parameters
+s = round(output_pixelres[z]/input_pixelres[z], 2)       # scale
+p = 0.8                                         # pixfrac
 
 # Instrument selector
 if filt is 'f160w' or filt is 'f125w':
@@ -51,7 +55,7 @@ hdr = weight.header
 
 weight_sqrt = np.sqrt(weight_image)
 # Prevents divide by zero
-weight_sqrt[weight_sqrt == 0] = 10**(-1*30.0)
+weight_sqrt[weight_sqrt == 0] = 10**(-1*31.0)
 rms = np.float32(1.0/weight_sqrt)
 print rms[0][0]
 rms_image = pyfits.PrimaryHDU(rms, header=hdr)
