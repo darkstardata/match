@@ -14,7 +14,6 @@ Also outputs an image with just the simulated galaxies that were added in each b
 
 Runtime ~ 1 hr  5 min
 '''
-import os
 import sys
 import pyfits                               # Open fits files
 import numpy as np
@@ -115,7 +114,7 @@ def add_pstamp(input_image, postage_stamp, xloc, yloc):
 
 def main():
     #Dashboard
-    wdir = os.getcwd()+'/'
+    wdir = '/home/lokiz/Desktop/fits/'
 
     # Prefixes for iterated input and output files
     galcomb = 'galcomb'                                   # image with n sim gal added
@@ -165,7 +164,7 @@ def main():
     for w in xrange(iteration[0]):
 
         # Read in image data and header from science image
-        image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
+        image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits', memmap=True)
         hdu = image[0]
         data = hdu.data
         hdr = hdu.header
@@ -178,7 +177,7 @@ def main():
 
             # Open simulated galaxy postage stamp, subtract sky, and zero out values less than zero.
             # Then add sku subtracted simulated galaxy to array of zeros.
-            gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits')[0].data
+            gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits', memmap=True)[0].data
 
             data = add_pstamp(data, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
             galset = add_pstamp(galset, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
