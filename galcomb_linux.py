@@ -14,7 +14,7 @@ Also outputs an image with just the simulated galaxies that were added in each b
 
 Runtime ~ 1 hr  5 min
 '''
-import os
+import gc
 import sys
 import pyfits                               # Open fits files
 import numpy as np
@@ -44,6 +44,10 @@ def writebigfits(output_name, data_in, xsize, ysize, out_size, hdr_in='none'):
         pyfits.update(output_name, data_in, endcard=ignore_missing_end )
     else:
         pyfits.update(output_name, data_in, header=hdr_in)
+
+    print str(output_name)+' successfully written to file!'
+    
+    return
 
 def add_pstamp(input_image, postage_stamp, xloc, yloc):
     """
@@ -148,7 +152,7 @@ def main():
 
     # Field and Filter selector
     y = 0       # Field index
-    z = 2       # Filter index
+    z = 3       # Filter index
 
     fields = ['uds', 'bootes']
     filters = ['f160w', 'f125w', 'f814w', 'f606w', 'f350lp']
@@ -184,10 +188,10 @@ def main():
 
     # Set iterations and name input image
     iteration = [5, 2000]                  # [ number of combined images, number of sim galaxies per combined image]
-    outsize = os.stat(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits').st_size
+    #outsize = os.stat(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits').st_size
 
     # Loop through batches of simulated galaxies
-    for w in xrange(iteration[0]):
+    for w in range(0, iteration[0]):
 
         # Read in image data and header from science image
         image = pyfits.open(science+'hlsp_candels_hst_'+inst+'_'+field+'-tot_'+filt+'_v1.0_drz.fits')
@@ -197,22 +201,39 @@ def main():
         xpix = hdr['NAXIS1']
         ypix = hdr['NAXIS2']
         galset = np.zeros((ypix, xpix), dtype=np.float32)
+        print 'Preparing numpy array'
 
         # Loop through the individual simulated galaxies
         for x in xrange(iteration[1]):
 
+
             # Open simulated galaxy postage stamp, subtract sky, and zero out values less than zero.
             # Then add sku subtracted simulated galaxy to array of zeros.
             gimage = pyfits.open(simgal + galmodel + str(x+w*iteration[1]) + '.fits')[0].data
-            galset = add_pstamp(galset, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
             data = add_pstamp(data, gimage, gxpix[x+w*iteration[1]], gypix[x+w*iteration[1]])
+
+
+        data_out = pyfits.PrimaryHDU(data=data, header=hdr)
+        print 'Beginning to write '+simcomb + galcomb + str(w) + '.fits file to disk.'
+        data_out.writeto(simcomb + galcomb + str(w) + '.fits', clobber=True)
+        print simcomb + galcomb + str(w) + '.fits successfully written to file!'
+
+        # Loop through the individual simulated galaxies
+        for y in xrange(iteration[1]):
+
+
+            # Open simulated galaxy postage stamp, subtract sky, and zero out values less than zero.
+            # Then add sku subtracted simulated galaxy to array of zeros.
+            gimage = pyfits.open(simgal + galmodel + str(y+w*iteration[1]) + '.fits')[0].data
+            galset = add_pstamp(galset, gimage, gxpix[y+w*iteration[1]], gypix[y+w*iteration[1]])
 
 
         # Write just simulated galaxy batch to galmodelset*.fits and the simulared + science to galcomb*.fits
         galset_out = pyfits.PrimaryHDU(data=galset)
+        print 'Beginning to write '+simgalset + galmodelset + str(w) + '.fits file to disk.'
         galset_out.writeto(simgalset + galmodelset + str(w) + '.fits', clobber=True)
-        data_out = pyfits.PrimaryHDU(data=data, header=hdr)
-        data_out.writeto(simcomb + galcomb + str(w) + '.fits', clobber=True)
+        print simgalset + galmodelset + str(w) + '.fits successfully written to file!'
+
         #writebigfits(simgalset + galmodelset + str(w) + '.fits', galset, xpix, ypix, outsize)
         #writebigfits(simcomb + galcomb + str(w) + '.fits', data, xpix, ypix, outsize, hdr_in =hdr)
 
